@@ -5,9 +5,10 @@ import "./ens/INameWrapper.sol";
 import "./Types.sol";
 import "./controllers/Controllable.sol";
 import "./NamespaceEmitter.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-contract NamespaceMinter is Controllable, EIP712("namespace", "1") {
+contract NamespaceMinter is Controllable, EIP712 {
     address private verifier;
     address private treasury;
     INameWrapper wrapperDelegate;
@@ -17,12 +18,13 @@ contract NamespaceMinter is Controllable, EIP712("namespace", "1") {
         address _verifier,
         address _treasury,
         address _controller,
-        INameWrapper _wrapperDelegate
-    ) {
+        INameWrapper _wrapperDelegate,
+        NamespaceEmitter _emitter
+    ) Controllable(_controller) EIP712("namespace", "1") {
         wrapperDelegate = _wrapperDelegate;
         verifier = _verifier;
         treasury = _treasury;
-        setController(_controller);
+        emitter = _emitter;
     }
 
     //@dev Event emmited when subname gets minted
@@ -69,34 +71,21 @@ contract NamespaceMinter is Controllable, EIP712("namespace", "1") {
     function _verify(
         MintSubnameContext memory context,
         bytes memory signature
-    ) internal {
-        bytes32 _encodedData = keccak256(
-            abi.encodePacked(
-                context.subnameLabel,
-                context.parentNode,
-                context.resolver,
-                context.subnameOwner,
-                context.fuses,
-                context.mintPrice,
-                context.mintFee,
-                context.paymentReceiver
-            )
-        );
-
-        string memory _parameters = 
-            "MintContext(string subnameLabel, bytes32 parentNode, address resolver, address subnameOwner, uint64 fuses, uint256 mintPrice, uint256 mintFee, address paymentReceiver)";
+    ) internal view {
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(
-                _parameters,
-                context.subnameLabel,
-                context.parentNode,
-                context.resolver,
-                context.subnameOwner,
-                context.fuses,
-                context.mintPrice,
-                context.mintFee,
-                context.paymentReceiver
-            ))
+            keccak256(
+                abi.encode(
+                    "MintContext(string subnameLabel, bytes32 parentNode, address resolver, address subnameOwner, uint64 fuses, uint256 mintPrice, uint256 mintFee, address paymentReceiver)",
+                    context.subnameLabel,
+                    context.parentNode,
+                    context.resolver,
+                    context.subnameOwner,
+                    context.fuses,
+                    context.mintPrice,
+                    context.mintFee,
+                    context.paymentReceiver
+                )
+            )
         );
 
         address signer = ECDSA.recover(digest, signature);

@@ -13,9 +13,7 @@ contract NamespaceEmitter is Controllable {
         address subnameOwner
     );
 
-    constructor(address _controller) {
-        setController(_controller, true);
-    }
+    constructor(address _controller) Controllable(_controller) {}
 
     function emitSubnameMinted(
         string calldata label,

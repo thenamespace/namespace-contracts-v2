@@ -8,9 +8,11 @@ contract NameWrapperDelegate is Controllable {
     mapping(address => bool) private accessControl;
     INameWrapper nameWrapper;
 
-    constructor(INameWrapper _nameWrapper, address _controller) {
+    constructor(
+        INameWrapper _nameWrapper,
+        address _controller
+    ) Controllable(_controller) {
         nameWrapper = _nameWrapper;
-        setController(_controller, true);
     }
 
     function setSubnodeRecord(
@@ -22,6 +24,15 @@ contract NameWrapperDelegate is Controllable {
         uint32 fuses,
         uint64 expiry
     ) external onlyController returns (bytes32) {
-        return nameWrapper.setSubnodeRecord(node, label, owner, resolver, ttl, fuses, expiry);
+        return
+            nameWrapper.setSubnodeRecord(
+                node,
+                label,
+                owner,
+                resolver,
+                ttl,
+                fuses,
+                expiry
+            );
     }
 }
