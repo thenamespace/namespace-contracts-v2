@@ -1,0 +1,4 @@
+Name wrapper delegate deployed with address 0x617ef49Eaf354c2779Ad3a9A9C0c064E636cc868
+Emitter deployed on address0x14b53fe590483D4B46248Fe8C1ff627D5E3bBd3d
+Registry deployed on address 0x1092fe463fC8D33A9129fE1bea52F25a021a028b
+Minter deployed on address 0x46ca04A1d968254a588a5a8bd701F2cc408CfF8d

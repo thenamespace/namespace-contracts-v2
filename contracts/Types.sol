@@ -9,11 +9,12 @@ struct MintSubnameContext {
     uint32 fuses;
     uint256 mintPrice;
     uint256 mintFee;
-    address paymentReceiver;
 }
 
-struct Signature {
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
+struct ListedENSName {
+    string label;
+    bytes32 nameNode;
+    address paymentReceiver;
+    bool isListed;
+
 }

@@ -6,58 +6,43 @@
 // global scope, and execute the script.
 const hre = require("hardhat");
 
-async function main() {
-
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
-
-  const validator = await hre.ethers.deployContract("")
-
-  const lockedAmount = hre.ethers.parseEther("0.001");
-
-  const lock = await hre.ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  await lock.waitForDeployment();
-
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
-}
-
 async function deployEnsContracts() {
+
   const nameWrapperAddress = "0x114D4603199df73e7D157787f8778E21fCd13066";
   const controllerAddress = "0x280f3EdCDF23E5a645f55AdF143baAa177c214FB";
   const namewrapperDelegate = await hre.ethers.deployContract("NameWrapperDelegate", [nameWrapperAddress, controllerAddress])
 
-  const NameWrapperDelegate = await namewrapperDelegate.deployed();
-  const delegateAddress = NameWrapperDelegate.address;
+  const NameWrapperDelegate = await namewrapperDelegate.waitForDeployment();
+  const delegateAddress = await NameWrapperDelegate.getAddress();
 
   console.log("Name wrapper delegate deployed with address " + delegateAddress);
 
   const NamespaceEmitter = await hre.ethers.deployContract("NamespaceEmitter", [controllerAddress]);
-  const emitter = await NamespaceEmitter.deployed();
-  const emitterAddress = await emitter.address;
+  const emitter = await NamespaceEmitter.waitForDeployment();
+  const emitterAddress = await emitter.getAddress();
 
   console.log("Emitter deployed on address" + emitterAddress);
 
-  // address _verifier,
-  // address _treasury,
-  // address _controller,
-  // INameWrapper _wrapperDelegate
+  const NamespaceRegitry = await hre.ethers.deployContract("NamespaceRegistry", [controllerAddress, nameWrapperAddress, emitterAddress])
+  const registry = await NamespaceRegitry.waitForDeployment();
+  const registryAddress = await registry.getAddress();
+  console.log("Registry deployed on address " + registryAddress);
 
-  const NamespaceMinter = await hre.ethers.deployContract("NamespaceMinter", [controllerAddress, controllerAddress, controllerAddress, delegateAddress, emitterAddress]);
-  const minter = await NamespaceMinter.deployed();
+  const NamespaceMinter = await hre.ethers.deployContract("NamespaceMinter", [controllerAddress, controllerAddress, controllerAddress, delegateAddress, emitterAddress, registryAddress]);
+  const minter = await NamespaceMinter.waitForDeployment();
 
-  console.log("Minter has been deployed on address " + minter.address);
+  const minterAddress = await minter.getAddress();
+
+  console.log("Minter deployed on address " + minterAddress );
+
+  await emitter.setController(minterAddress, true);
+  await emitter.setController(registryAddress, true);
+  await NameWrapperDelegate.setController(minterAddress, true);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
+deployEnsContracts().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

@@ -13,6 +13,15 @@ contract NamespaceEmitter is Controllable {
         address subnameOwner
     );
 
+    event NameListed(
+        string nameLabel,
+        bytes32 node,
+        address paymentReceiver,
+        address operator
+    );
+
+    event NameUnlisted(string nameLabel, bytes32 node, address operator);
+
     constructor(address _controller) Controllable(_controller) {}
 
     function emitSubnameMinted(
@@ -31,5 +40,22 @@ contract NamespaceEmitter is Controllable {
             minter,
             subnameOwner
         );
+    }
+
+    function emitNameListed(
+        string calldata nameLabel,
+        bytes32 nameNode,
+        address paymentReceiver,
+        address operator
+    ) external onlyController {
+        emit NameListed(nameLabel, nameNode, paymentReceiver, operator);
+    }
+
+    function emitNameUnlisted(
+        string calldata nameLabel,
+        bytes32 nameNode,
+        address operator
+    ) external onlyController {
+        emit NameUnlisted(nameLabel, nameNode, operator);
     }
 }

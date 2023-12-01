@@ -4,27 +4,39 @@ pragma solidity ~0.8.20;
 import "./ens/INameWrapper.sol";
 import "./Types.sol";
 import "./controllers/Controllable.sol";
-import "./NamespaceEmitter.sol";
+import "./INamespaceEmitter.sol";
+import "./INamespaceRegistry.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+
+error InvalidSignature();
+error NameNotListed(bytes32 node);
+error NotEnoughFunds(uint256 current, uint256 expected);
 
 contract NamespaceMinter is Controllable, EIP712 {
     address private verifier;
     address private treasury;
     INameWrapper wrapperDelegate;
-    NamespaceEmitter emitter;
+    INamespaceEmitter emitter;
+    INamespaceRegistry registry;
+    bytes32 constant MINT_CONTEXT =
+        keccak256(
+            "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee)"
+        );
 
     constructor(
         address _verifier,
         address _treasury,
         address _controller,
         INameWrapper _wrapperDelegate,
-        NamespaceEmitter _emitter
+        INamespaceEmitter _emitter,
+        INamespaceRegistry _registry
     ) Controllable(_controller) EIP712("namespace", "1") {
         wrapperDelegate = _wrapperDelegate;
         verifier = _verifier;
         treasury = _treasury;
         emitter = _emitter;
+        registry = _registry;
     }
 
     //@dev Event emmited when subname gets minted
@@ -37,23 +49,32 @@ contract NamespaceMinter is Controllable, EIP712 {
         address subnameOwner
     );
 
-    function mintUnsafe(
-        MintSubnameContext memory mintContext,
+    function mint(
+        MintSubnameContext memory context,
         bytes memory signature
     ) external payable {
-        _verify(mintContext, signature);
-        _mint(mintContext);
-        _transferFunds(mintContext);
-        _emit(mintContext);
+        ListedENSName memory listing = registry.listings(context.parentNode);
+
+        if (listing.isListed) {
+            revert NameNotListed(context.parentNode);
+        }
+
+        if (_extractSigner(context, signature) != verifier) {
+            revert InvalidSignature();
+        }
+
+        uint256 totalPrice = context.mintFee + context.mintPrice;
+        if (msg.value < totalPrice) {
+            revert NotEnoughFunds(msg.value, totalPrice);
+        }
+
+        _mint(context);
+        _transferFunds(listing.paymentReceiver, context.mintPrice, context.mintFee);
     }
 
-    function _transferFunds(MintSubnameContext memory context) internal {
-        require(
-            msg.value >= context.mintPrice + context.mintFee,
-            "Inssuficient funds"
-        );
-        payable(context.paymentReceiver).transfer(context.mintPrice);
-        payable(treasury).transfer(context.mintFee);
+    function _transferFunds(address paymentReceiver, uint256 mintPrice, uint256 mintFee) internal {
+        payable(paymentReceiver).transfer(mintPrice);
+        payable(treasury).transfer(mintFee);
     }
 
     function _mint(MintSubnameContext memory context) internal {
@@ -68,36 +89,40 @@ contract NamespaceMinter is Controllable, EIP712 {
         );
     }
 
-    function _verify(
+    function _verifyListing(MintSubnameContext memory context) internal {
+        ListedENSName memory listing = registry.listings(context.parentNode);
+        if (!listing.isListed) {
+            revert NameNotListed(context.parentNode);
+        }
+    }
+
+    function _extractSigner(
         MintSubnameContext memory context,
         bytes memory signature
-    ) internal view {
+    ) internal view returns (address) {
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    "MintContext(string subnameLabel, bytes32 parentNode, address resolver, address subnameOwner, uint64 fuses, uint256 mintPrice, uint256 mintFee, address paymentReceiver)",
-                    context.subnameLabel,
+                    MINT_CONTEXT,
+                    keccak256(abi.encodePacked(context.subnameLabel)),
                     context.parentNode,
                     context.resolver,
                     context.subnameOwner,
                     context.fuses,
                     context.mintPrice,
-                    context.mintFee,
-                    context.paymentReceiver
+                    context.mintFee
                 )
             )
         );
-
-        address signer = ECDSA.recover(digest, signature);
-        require(signer == verifier, "Signature cannot be verified.");
+        return ECDSA.recover(digest, signature);
     }
 
-    function _emit(MintSubnameContext memory context) internal {
+    function _emit(MintSubnameContext memory context, address paymentReceiver) internal {
         emitter.emitSubnameMinted(
             context.subnameLabel,
             context.parentNode,
             context.mintPrice,
-            context.paymentReceiver,
+            paymentReceiver,
             msg.sender,
             context.subnameOwner
         );
