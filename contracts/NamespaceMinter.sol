@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 error InvalidSignature();
 error NameNotListed(bytes32 node);
+error SignatureAlreadyUsed();
 error NotEnoughFunds(uint256 current, uint256 expected);
 
 contract NamespaceMinter is Controllable, EIP712 {
@@ -23,6 +24,8 @@ contract NamespaceMinter is Controllable, EIP712 {
         keccak256(
             "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee)"
         );
+
+    mapping(bytes32 => bool) usedSignatures;
 
     constructor(
         address _verifier,
@@ -39,23 +42,20 @@ contract NamespaceMinter is Controllable, EIP712 {
         registry = _registry;
     }
 
-    //@dev Event emmited when subname gets minted
-    event SubnameMinted(
-        bytes32 indexed parentNode,
-        string label,
-        uint256 price,
-        address indexed paymentReceiver,
-        address sender,
-        address subnameOwner
-    );
-
+    // @context
+    // @param 
     function mint(
         MintSubnameContext memory context,
         bytes memory signature
     ) external payable {
-        ListedENSName memory listing = registry.listings(context.parentNode);
+        bytes32 signatureHash = keccak256(signature);
 
-        if (listing.isListed) {
+        if (usedSignatures[signatureHash]) {
+            revert SignatureAlreadyUsed();
+        }
+
+        ListedENSName memory listing = registry.getListing(context.parentNode);
+        if (!listing.isListed) {
             revert NameNotListed(context.parentNode);
         }
 
@@ -68,15 +68,26 @@ contract NamespaceMinter is Controllable, EIP712 {
             revert NotEnoughFunds(msg.value, totalPrice);
         }
 
+        usedSignatures[signatureHash] = true;
         _mint(context);
-        _transferFunds(listing.paymentReceiver, context.mintPrice, context.mintFee);
+        _transferFunds(
+            listing.paymentReceiver,
+            context.mintPrice,
+            context.mintFee
+        );
     }
 
-    function _transferFunds(address paymentReceiver, uint256 mintPrice, uint256 mintFee) internal {
+    function _transferFunds(
+        address paymentReceiver,
+        uint256 mintPrice,
+        uint256 mintFee
+    ) internal {
         payable(paymentReceiver).transfer(mintPrice);
         payable(treasury).transfer(mintFee);
     }
 
+    // curently, all the info required for minting is calculated offchain and send via parameters with sigature
+    // maybe we can store listing prices on chain and use offchain for additional minting condition (whitelistings, reservations, tokenGated)
     function _mint(MintSubnameContext memory context) internal {
         wrapperDelegate.setSubnodeRecord(
             context.parentNode,
@@ -87,13 +98,6 @@ contract NamespaceMinter is Controllable, EIP712 {
             context.fuses,
             type(uint64).max
         );
-    }
-
-    function _verifyListing(MintSubnameContext memory context) internal {
-        ListedENSName memory listing = registry.listings(context.parentNode);
-        if (!listing.isListed) {
-            revert NameNotListed(context.parentNode);
-        }
     }
 
     function _extractSigner(
@@ -117,7 +121,10 @@ contract NamespaceMinter is Controllable, EIP712 {
         return ECDSA.recover(digest, signature);
     }
 
-    function _emit(MintSubnameContext memory context, address paymentReceiver) internal {
+    function _emit(
+        MintSubnameContext memory context,
+        address paymentReceiver
+    ) internal {
         emitter.emitSubnameMinted(
             context.subnameLabel,
             context.parentNode,

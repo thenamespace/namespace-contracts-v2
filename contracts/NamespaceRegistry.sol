@@ -66,6 +66,10 @@ contract NamespaceRegistry is Controllable {
         }
     }
 
+    function getListing(bytes32 node) external view returns (ListedENSName memory) {
+        return listings[node];
+    }
+
     function _node(
         bytes32 parent,
         string memory label

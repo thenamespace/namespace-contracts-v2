@@ -16,5 +16,4 @@ struct ListedENSName {
     bytes32 nameNode;
     address paymentReceiver;
     bool isListed;
-
 }
