@@ -1,25 +1,42 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ~0.8.20;
 
-import "./ens/INameWrapper.sol";
 import "./Types.sol";
 import "./controllers/Controllable.sol";
-import "./INamespaceEmitter.sol";
 import "./INamespaceRegistry.sol";
+import "./ens/INameWrapper.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 error InvalidSignature();
+error NotNameOwner(address current, address expected);
 error NameNotListed(bytes32 node);
+error LabelListingNotFound(string nameLabel);
 error SignatureAlreadyUsed();
 error NotEnoughFunds(uint256 current, uint256 expected);
 
-contract NamespaceMinter is Controllable, EIP712 {
+contract NamespaceOperations is Controllable, EIP712 {
+    event NameListed(string nameLabel, bytes32 node, address operator);
+
+    event NameUnlisted(string nameLabel, bytes32 node, address operator);
+
+    event SubnameMinted(
+        bytes32 indexed parentNode,
+        string label,
+        uint256 price,
+        address indexed paymentReceiver,
+        address sender,
+        address subnameOwner
+    );
+
     address private verifier;
     address private treasury;
-    INameWrapper wrapperDelegate;
-    INamespaceEmitter emitter;
+    address public nameWrapper;
     INamespaceRegistry registry;
+
+    bytes32 private constant ETH_NODE =
+        0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae;
+
     bytes32 constant MINT_CONTEXT =
         keccak256(
             "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee)"
@@ -31,19 +48,53 @@ contract NamespaceMinter is Controllable, EIP712 {
         address _verifier,
         address _treasury,
         address _controller,
-        INameWrapper _wrapperDelegate,
-        INamespaceEmitter _emitter,
-        INamespaceRegistry _registry
+        address _nameWrapper
     ) Controllable(_controller) EIP712("namespace", "1") {
-        wrapperDelegate = _wrapperDelegate;
         verifier = _verifier;
         treasury = _treasury;
-        emitter = _emitter;
-        registry = _registry;
+        nameWrapper = _nameWrapper;
+    }
+
+    function list(
+        string memory ensNameLabel,
+        bytes32 nameNode,
+        address paymentReceiver
+    ) external {
+        _isNameOwner(nameNode);
+
+        // CANNOT_UNWRAP needs to be burned to allow minting unruggable subnames
+        INameWrapper(nameWrapper).setFuses(nameNode, uint16(CANNOT_UNWRAP));
+
+        registry.set(
+            nameNode,
+            ListedENSName(ensNameLabel, nameNode, paymentReceiver, true)
+        );
+        emit NameListed(ensNameLabel, nameNode, msg.sender);
+    }
+
+    function unlist(string memory ensNameLabel) external {
+        bytes32 nameNode = _node(ETH_NODE, ensNameLabel);
+
+        _isNameOwner(nameNode);
+
+        if (!registry.get(nameNode).isListed) {
+            revert LabelListingNotFound(ensNameLabel);
+        }
+
+        registry.remove(nameNode);
+        emit NameUnlisted(ensNameLabel, nameNode, msg.sender);
+    }
+
+    function _isNameOwner(bytes32 node) internal view {
+        address nameOwner = INameWrapper(nameWrapper).ownerOf(uint256(node));
+
+        if (nameOwner != msg.sender) {
+            revert NotNameOwner(msg.sender, nameOwner);
+        }
     }
 
     // @context
-    // @param 
+    // @param
     function mint(
         MintSubnameContext memory context,
         bytes memory signature
@@ -54,7 +105,7 @@ contract NamespaceMinter is Controllable, EIP712 {
             revert SignatureAlreadyUsed();
         }
 
-        ListedENSName memory listing = registry.getListing(context.parentNode);
+        ListedENSName memory listing = registry.get(context.parentNode);
         if (!listing.isListed) {
             revert NameNotListed(context.parentNode);
         }
@@ -77,19 +128,10 @@ contract NamespaceMinter is Controllable, EIP712 {
         );
     }
 
-    function _transferFunds(
-        address paymentReceiver,
-        uint256 mintPrice,
-        uint256 mintFee
-    ) internal {
-        payable(paymentReceiver).transfer(mintPrice);
-        payable(treasury).transfer(mintFee);
-    }
-
     // curently, all the info required for minting is calculated offchain and send via parameters with sigature
     // maybe we can store listing prices on chain and use offchain for additional minting condition (whitelistings, reservations, tokenGated)
     function _mint(MintSubnameContext memory context) internal {
-        wrapperDelegate.setSubnodeRecord(
+        INameWrapper(nameWrapper).setSubnodeRecord(
             context.parentNode,
             context.subnameLabel,
             context.subnameOwner,
@@ -98,6 +140,15 @@ contract NamespaceMinter is Controllable, EIP712 {
             context.fuses,
             type(uint64).max
         );
+    }
+
+    function _transferFunds(
+        address paymentReceiver,
+        uint256 mintPrice,
+        uint256 mintFee
+    ) internal {
+        payable(paymentReceiver).transfer(mintPrice);
+        payable(treasury).transfer(mintFee);
     }
 
     function _extractSigner(
@@ -125,14 +176,22 @@ contract NamespaceMinter is Controllable, EIP712 {
         MintSubnameContext memory context,
         address paymentReceiver
     ) internal {
-        emitter.emitSubnameMinted(
-            context.subnameLabel,
+        emit SubnameMinted(
             context.parentNode,
+            context.subnameLabel,
             context.mintPrice,
             paymentReceiver,
             msg.sender,
             context.subnameOwner
         );
+    }
+
+    function _node(
+        bytes32 parent,
+        string memory label
+    ) internal pure returns (bytes32) {
+        bytes32 labelhash = keccak256(bytes(label));
+        return keccak256(abi.encodePacked(parent, labelhash));
     }
 
     function setTreasury(address _treasury) external onlyController {

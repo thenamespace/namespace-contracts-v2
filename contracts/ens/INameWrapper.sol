@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ~0.8.20;
 
+uint32 constant CANNOT_UNWRAP = 1;
+
 interface INameWrapper {
     error Unauthorised(bytes32 node, address addr);
     error IncompatibleParent();
@@ -25,4 +27,9 @@ interface INameWrapper {
         uint32 fuses,
         uint64 expiry
     ) external returns (bytes32);
+
+    function setFuses(
+        bytes32 node,
+        uint16 ownerControlledFuses
+    ) external returns (uint32 newFuses);
 }
