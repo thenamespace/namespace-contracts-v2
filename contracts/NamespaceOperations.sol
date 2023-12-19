@@ -48,11 +48,13 @@ contract NamespaceOperations is Controllable, EIP712 {
         address _verifier,
         address _treasury,
         address _controller,
-        address _nameWrapper
+        address _nameWrapper,
+        address _namespaceRegistry
     ) Controllable(_controller) EIP712("namespace", "1") {
         verifier = _verifier;
         treasury = _treasury;
         nameWrapper = _nameWrapper;
+        registry = INamespaceRegistry(_namespaceRegistry);
     }
 
     function list(
