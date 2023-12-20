@@ -23,7 +23,8 @@ contract NamespaceOperations is Controllable, EIP712 {
     event SubnameMinted(
         bytes32 indexed parentNode,
         string label,
-        uint256 price,
+        uint256 mintPrice,
+        uint256 mintFee,
         address indexed paymentReceiver,
         address sender,
         address subnameOwner
@@ -33,10 +34,7 @@ contract NamespaceOperations is Controllable, EIP712 {
     address private treasury;
     address public nameWrapper;
     INamespaceRegistry registry;
-
-    bytes32 private constant ETH_NODE =
-        0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae;
-
+    
     bytes32 constant MINT_CONTEXT =
         keccak256(
             "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee)"
@@ -74,9 +72,7 @@ contract NamespaceOperations is Controllable, EIP712 {
         emit NameListed(ensNameLabel, nameNode, msg.sender);
     }
 
-    function unlist(string memory ensNameLabel) external {
-        bytes32 nameNode = _node(ETH_NODE, ensNameLabel);
-
+    function unlist(string memory ensNameLabel, bytes32 nameNode) external {
         _isNameOwner(nameNode);
 
         if (!registry.get(nameNode).isListed) {
@@ -95,8 +91,6 @@ contract NamespaceOperations is Controllable, EIP712 {
         }
     }
 
-    // @context
-    // @param
     function mint(
         MintSubnameContext memory context,
         bytes memory signature
@@ -127,6 +121,16 @@ contract NamespaceOperations is Controllable, EIP712 {
             listing.paymentReceiver,
             context.mintPrice,
             context.mintFee
+        );
+
+        emit SubnameMinted(
+            context.parentNode,
+            context.subnameLabel,
+            context.mintPrice,
+            context.mintFee,
+            listing.paymentReceiver,
+            msg.sender,
+            context.subnameOwner
         );
     }
 
@@ -172,28 +176,6 @@ contract NamespaceOperations is Controllable, EIP712 {
             )
         );
         return ECDSA.recover(digest, signature);
-    }
-
-    function _emit(
-        MintSubnameContext memory context,
-        address paymentReceiver
-    ) internal {
-        emit SubnameMinted(
-            context.parentNode,
-            context.subnameLabel,
-            context.mintPrice,
-            paymentReceiver,
-            msg.sender,
-            context.subnameOwner
-        );
-    }
-
-    function _node(
-        bytes32 parent,
-        string memory label
-    ) internal pure returns (bytes32) {
-        bytes32 labelhash = keccak256(bytes(label));
-        return keccak256(abi.encodePacked(parent, labelhash));
     }
 
     function setTreasury(address _treasury) external onlyController {
