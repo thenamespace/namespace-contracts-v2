@@ -1,4 +1,6 @@
-Name wrapper delegate deployed with address 0x7112E8879f6236D2e1FA10e30Bb7151c471f12fd
-Emitter deployed on address0x618870161Ca63274A3C1881ce643aa8a5B97a79b
-Registry deployed on address 0x0A355b0695cFf10Fd0061054de88f9bC1Ffcd36C
-Minter deployed on address 0xD275Ac9fb48aeED1161189B1603e15C369AF0119
+GOERLI
+    0x0bA238efE5161F9F37D2a0df3DB37d384a5Cd6A1  NamespaceRegistry Address
+    0x07315c55031b9318FFf1679B4796EF42E0d1E115  NamespaceOperations Address
+SEPOLIA
+    0xE05724722BFfe5DF8cB48C6cc4aD0591cf62822f  NamespaceRegistry Address
+    0x93CE2738D9b6395cFf9A0297C5A7b0f216C4ac50  NamespaceOperations Address

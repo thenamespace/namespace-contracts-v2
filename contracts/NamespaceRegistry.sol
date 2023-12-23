@@ -2,12 +2,11 @@
 pragma solidity ~0.8.20;
 
 import "./controllers/Controllable.sol";
+import "./INamespaceRegistry.sol";
 import "./Types.sol";
 
-error NotNameOwner(address current, address expected);
-error NameNotListed(string nameLabel);
 
-contract NamespaceRegistry is Controllable {
+contract NamespaceRegistry is INamespaceRegistry, Controllable {
     mapping(bytes32 => ListedENSName) listings;
 
     constructor(address _controller) Controllable(_controller) {}
