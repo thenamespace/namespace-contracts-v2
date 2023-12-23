@@ -9,6 +9,7 @@ struct MintSubnameContext {
     uint32 fuses;
     uint256 mintPrice;
     uint256 mintFee;
+    uint64 ttl;
 }
 
 struct ListedENSName {
