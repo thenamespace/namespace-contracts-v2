@@ -16,6 +16,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
     INameWrapper nameWrapper;
 
     address private verifier;
+    address private pendingVerifier;
     address[] private verifierApprovals;
 
     mapping(bytes32 => bool) usedSignatures;
@@ -96,6 +97,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
         // when verifier gives the first approval
         if (msg.sender == verifier && verifierApprovals.length == 0) {
             verifierApprovals[0] = msg.sender;
+            pendingVerifier = _verifier;
             return;
         }
 
@@ -105,7 +107,12 @@ contract NameWrapperDelegate is Controllable, EIP712 {
             verifierApprovals.length == 1 &&
             verifierApprovals[0] != msg.sender
         ) {
+            require(
+                _verifier == pendingVerifier,
+                "Different verifier provided"
+            );
             verifier = _verifier;
+            delete pendingVerifier;
             delete verifierApprovals;
             return;
         }
@@ -113,6 +120,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
         // when controller gives the first approval
         if (controllers[msg.sender] && verifierApprovals.length == 0) {
             verifierApprovals[0] = msg.sender;
+            pendingVerifier = _verifier;
             return;
         }
 
@@ -122,7 +130,12 @@ contract NameWrapperDelegate is Controllable, EIP712 {
             verifierApprovals.length == 1 &&
             verifierApprovals[0] != msg.sender
         ) {
+            require(
+                _verifier == pendingVerifier,
+                "Different verifier provided"
+            );
             verifier = _verifier;
+            delete pendingVerifier;
             delete verifierApprovals;
             return;
         }
