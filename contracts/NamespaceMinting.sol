@@ -22,19 +22,16 @@ contract NamespaceMinting is Controllable {
 
     address private treasury;
     address public nameWrapperDelegate;
-    address public nameWrapper;
     INamespaceRegistry registry;
 
     constructor(
         address _treasury,
         address _controller,
         address _nameWrapperDelegate,
-        address _nameWrapper,
         address _registry
     ) Controllable(_controller) {
         treasury = _treasury;
         nameWrapperDelegate = _nameWrapperDelegate;
-        nameWrapper = _nameWrapper;
         registry = INamespaceRegistry(_registry);
     }
 
