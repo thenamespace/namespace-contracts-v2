@@ -68,7 +68,6 @@ contract NamespaceMinting is Controllable {
         NameWrapperDelegate(nameWrapperDelegate).setSubnodeRecord(
             context,
             signature,
-            type(uint64).max,
             type(uint64).max
         );
     }

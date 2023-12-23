@@ -15,9 +15,15 @@ contract NameWrapperDelegate is Controllable, EIP712 {
     mapping(address => bool) private accessControl;
     INameWrapper nameWrapper;
 
+    struct ChangeVerifier {
+        bool controllerApproval;
+        bool verifierApproval;
+        address pendingVerifier;
+    }
+
+    ChangeVerifier private changeVerifier;
+
     address private verifier;
-    address private pendingVerifier;
-    address[] private verifierApprovals;
 
     mapping(bytes32 => bool) usedSignatures;
 
@@ -39,7 +45,6 @@ contract NameWrapperDelegate is Controllable, EIP712 {
     function setSubnodeRecord(
         MintSubnameContext memory context,
         bytes memory signature,
-        uint64 ttl,
         uint64 expiry
     ) external onlyController returns (bytes32) {
         bytes32 signatureHash = keccak256(signature);
@@ -60,7 +65,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
                 context.subnameLabel,
                 context.subnameOwner,
                 context.resolver,
-                ttl,
+                context.ttl,
                 context.fuses,
                 expiry
             );
@@ -92,54 +97,33 @@ contract NameWrapperDelegate is Controllable, EIP712 {
     }
 
     function setVerifier(address _verifier) external {
-        require(!controllers[_verifier], "Verifier can't be controller");
+        require(
+            _verifier != address(0) && !controllers[_verifier],
+            "Verifier cannot be zero address or controller"
+        );
 
-        // when verifier gives the first approval
-        if (msg.sender == verifier && verifierApprovals.length == 0) {
-            verifierApprovals[0] = msg.sender;
-            pendingVerifier = _verifier;
-            return;
+        require(
+            msg.sender == verifier || controllers[msg.sender],
+            "Operation not permited"
+        );
+
+        if (msg.sender == verifier) {
+            changeVerifier.verifierApproval = true;
+        } else if (controllers[msg.sender]) {
+            changeVerifier.controllerApproval = true;
         }
 
-        // when verfier gives the second approval
+        if (changeVerifier.pendingVerifier == address(0)) {
+            changeVerifier.pendingVerifier = _verifier;
+        } else if (changeVerifier.pendingVerifier != _verifier) {
+            revert PermissionDenied("Verifier missmatch");
+        }
+
         if (
-            msg.sender == verifier &&
-            verifierApprovals.length == 1 &&
-            verifierApprovals[0] != msg.sender
+            changeVerifier.verifierApproval && changeVerifier.controllerApproval
         ) {
-            require(
-                _verifier == pendingVerifier,
-                "Different verifier provided"
-            );
-            verifier = _verifier;
-            delete pendingVerifier;
-            delete verifierApprovals;
-            return;
+            verifier = changeVerifier.pendingVerifier;
+            delete changeVerifier;
         }
-
-        // when controller gives the first approval
-        if (controllers[msg.sender] && verifierApprovals.length == 0) {
-            verifierApprovals[0] = msg.sender;
-            pendingVerifier = _verifier;
-            return;
-        }
-
-        // when controller gives the second approval
-        if (
-            controllers[msg.sender] &&
-            verifierApprovals.length == 1 &&
-            verifierApprovals[0] != msg.sender
-        ) {
-            require(
-                _verifier == pendingVerifier,
-                "Different verifier provided"
-            );
-            verifier = _verifier;
-            delete pendingVerifier;
-            delete verifierApprovals;
-            return;
-        }
-
-        revert PermissionDenied("Setting the verifier denied");
     }
 }

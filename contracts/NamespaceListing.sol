@@ -16,9 +16,6 @@ contract NamespaceListing is Controllable {
     address public nameWrapper;
     INamespaceRegistry registry;
 
-    bytes32 private constant ETH_NODE =
-        0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae;
-
     constructor(
         address _controller,
         address _nameWrapperDelegate,
@@ -50,9 +47,7 @@ contract NamespaceListing is Controllable {
         emit NameListed(ensNameLabel, nameNode, msg.sender);
     }
 
-    function unlist(string memory ensNameLabel) external {
-        bytes32 nameNode = _node(ETH_NODE, ensNameLabel);
-
+    function unlist(string memory ensNameLabel, bytes32 nameNode) external {
         _isNameOwner(nameNode);
 
         if (!registry.get(nameNode).isListed) {
@@ -69,13 +64,5 @@ contract NamespaceListing is Controllable {
         if (nameOwner != msg.sender) {
             revert NotNameOwner(msg.sender, nameOwner);
         }
-    }
-
-    function _node(
-        bytes32 parent,
-        string memory label
-    ) internal pure returns (bytes32) {
-        bytes32 labelhash = keccak256(bytes(label));
-        return keccak256(abi.encodePacked(parent, labelhash));
     }
 }
