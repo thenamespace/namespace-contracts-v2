@@ -57,6 +57,7 @@ contract NamespaceMinting is Controllable {
             context.mintPrice,
             context.mintFee
         );
+        _emit(context, listing.paymentReceiver);
     }
 
     // curently, all the info required for minting is calculated offchain and send via parameters with sigature
