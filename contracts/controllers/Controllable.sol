@@ -8,8 +8,8 @@ contract Controllable is Ownable {
 
     event ControllerChanged(address indexed controller, bool enabled);
 
-    constructor(address _baseOwner) Ownable(_baseOwner) {
-        setController(_baseOwner, true);
+    constructor(address _baseOwner, address _controller) Ownable(_baseOwner) {
+        setController(_controller, true);
     }
 
     modifier onlyController() {

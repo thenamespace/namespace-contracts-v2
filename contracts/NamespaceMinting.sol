@@ -29,7 +29,7 @@ contract NamespaceMinting is Controllable {
         address _controller,
         address _nameWrapperDelegate,
         address _registry
-    ) Controllable(_controller) {
+    ) Controllable(msg.sender, _controller) {
         treasury = _treasury;
         nameWrapperDelegate = _nameWrapperDelegate;
         registry = INamespaceRegistry(_registry);

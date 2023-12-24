@@ -5,11 +5,10 @@ import "./controllers/Controllable.sol";
 import "./INamespaceRegistry.sol";
 import "./Types.sol";
 
-
 contract NamespaceRegistry is INamespaceRegistry, Controllable {
     mapping(bytes32 => ListedENSName) listings;
 
-    constructor(address _controller) Controllable(_controller) {}
+    constructor(address _controller) Controllable(msg.sender, _controller) {}
 
     function set(
         bytes32 node,

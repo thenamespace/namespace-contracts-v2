@@ -36,7 +36,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
         INameWrapper _nameWrapper,
         address _controller,
         address _verifier
-    ) Controllable(_controller) EIP712("namespace", "1") {
+    ) Controllable(msg.sender, _controller) EIP712("namespace", "1") {
         require(_controller != _verifier, "Verifier can't be controller");
 
         nameWrapper = _nameWrapper;

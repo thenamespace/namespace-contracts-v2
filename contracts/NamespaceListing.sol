@@ -5,10 +5,10 @@ import "./controllers/Controllable.sol";
 import "./INamespaceRegistry.sol";
 import "./NameWrapperDelegate.sol";
 
-error NotNameOwner(address current, address expected);
-error NameNotListed(string nameLabel);
-
 contract NamespaceListing is Controllable {
+    error NotNameOwner(address current, address expected);
+    error NameNotListed(string nameLabel);
+
     event NameListed(string nameLabel, bytes32 node, address operator);
     event NameUnlisted(string nameLabel, bytes32 node, address operator);
 
@@ -21,7 +21,7 @@ contract NamespaceListing is Controllable {
         address _nameWrapperDelegate,
         address _nameWrapper,
         address _registry
-    ) Controllable(_controller) {
+    ) Controllable(msg.sender, _controller) {
         nameWrapperDelegate = _nameWrapperDelegate;
         nameWrapper = _nameWrapper;
         registry = INamespaceRegistry(_registry);

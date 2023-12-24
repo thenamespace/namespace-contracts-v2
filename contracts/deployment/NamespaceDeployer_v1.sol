@@ -2,11 +2,15 @@
 pragma solidity ~0.8.20;
 
 import "../NamespaceRegistry.sol";
-import "../NamespaceOperations.sol";
+import "../NamespaceMinting.sol";
+import "../NamespaceListing.sol";
+import "../NameWrapperDelegate.sol";
 
 contract NamespaceDeployer {
-    address public operations;
     address public registry;
+    address public minting;
+    address public listing;
+    address public nameWrapperDelegate;
 
     constructor(
         address _verifier,
@@ -14,21 +18,41 @@ contract NamespaceDeployer {
         address _controller,
         address _nameWrapper
     ) {
-        NamespaceRegistry _registry = new NamespaceRegistry(msg.sender);
-        NamespaceOperations _operations = new NamespaceOperations(
-            _verifier,
+        // listing contract
+        NamespaceListing _listing = new NamespaceListing(
+            _controller,
+            nameWrapperDelegate,
+            _nameWrapper,
+            registry
+        );
+        listing = address(_listing);
+
+        // registry
+        NamespaceRegistry _registry = new NamespaceRegistry(address(_listing));
+        registry = address(_registry);
+
+        // minting contract
+        NamespaceMinting _minting = new NamespaceMinting(
             _treasury,
-            msg.sender,
+            _controller,
             _nameWrapper,
             address(_registry)
         );
+        minting = address(_minting);
 
+        // name wrapper delegate
+        NameWrapperDelegate _nameWrapperDelegate = new NameWrapperDelegate(
+            INameWrapper(_nameWrapper),
+            _controller,
+            _verifier
+        );
+        nameWrapperDelegate = address(_nameWrapperDelegate);
+        _nameWrapperDelegate.setController(minting, true);
 
-        registry = address(_registry);
-        operations = address(_operations);
-
-        _registry.setController(address(_operations), true);
+        // ownership transfer
         _registry.transferOwnership(_controller);
-        _operations.transferOwnership(_controller);
+        _minting.transferOwnership(_controller);
+        _listing.transferOwnership(_controller);
+        _nameWrapperDelegate.transferOwnership(_controller);
     }
 }
