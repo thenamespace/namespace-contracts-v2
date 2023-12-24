@@ -31,15 +31,6 @@ contract NamespaceDeployer {
         NamespaceRegistry _registry = new NamespaceRegistry(address(_listing));
         registry = address(_registry);
 
-        // minting contract
-        NamespaceMinting _minting = new NamespaceMinting(
-            _treasury,
-            _controller,
-            _nameWrapper,
-            address(_registry)
-        );
-        minting = address(_minting);
-
         // name wrapper delegate
         NameWrapperDelegate _nameWrapperDelegate = new NameWrapperDelegate(
             INameWrapper(_nameWrapper),
@@ -47,6 +38,17 @@ contract NamespaceDeployer {
             _verifier
         );
         nameWrapperDelegate = address(_nameWrapperDelegate);
+
+        // minting contract
+        NamespaceMinting _minting = new NamespaceMinting(
+            _treasury,
+            _controller,
+            nameWrapperDelegate,
+            address(_registry)
+        );
+        minting = address(_minting);
+
+        _nameWrapperDelegate.setController(listing, true);
         _nameWrapperDelegate.setController(minting, true);
 
         // ownership transfer
