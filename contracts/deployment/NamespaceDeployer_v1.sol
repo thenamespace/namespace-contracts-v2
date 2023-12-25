@@ -48,6 +48,7 @@ contract NamespaceDeployer {
         );
         minting = address(_minting);
 
+        _nameWrapperDelegate.setController(listing, true);
         _nameWrapperDelegate.setController(minting, true);
 
         // ownership transfer
