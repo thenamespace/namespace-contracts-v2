@@ -13,17 +13,14 @@ contract NamespaceListing is Controllable {
     event NameUnlisted(string nameLabel, bytes32 node, address operator);
 
     address public nameWrapperDelegate;
-    address public nameWrapper;
     INamespaceRegistry registry;
 
     constructor(
         address _controller,
         address _nameWrapperDelegate,
-        address _nameWrapper,
         address _registry
     ) Controllable(msg.sender, _controller) {
         nameWrapperDelegate = _nameWrapperDelegate;
-        nameWrapper = _nameWrapper;
         registry = INamespaceRegistry(_registry);
     }
 
@@ -59,7 +56,7 @@ contract NamespaceListing is Controllable {
     }
 
     function _isNameOwner(bytes32 node) internal view {
-        address nameOwner = INameWrapper(nameWrapper).ownerOf(uint256(node));
+        address nameOwner = NameWrapperDelegate(nameWrapperDelegate).ownerOf(uint256(node));
 
         if (nameOwner != msg.sender) {
             revert NotNameOwner(msg.sender, nameOwner);

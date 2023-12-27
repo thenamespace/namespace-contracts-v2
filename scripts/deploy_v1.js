@@ -14,6 +14,9 @@ async function deploy() {
   ]);
 
   await deployer.waitForDeployment();
+  console.log("Minter address " + await deployer.minting());
+  console.log("Lister address " + await deployer.listing());
+  console.log("NameWrapperDelegate address " + await deployer.nameWrapperDelegate())
 }
 
 deploy().catch((error) => {

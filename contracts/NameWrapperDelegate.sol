@@ -96,6 +96,10 @@ contract NameWrapperDelegate is Controllable, EIP712 {
         return ECDSA.recover(digest, signature);
     }
 
+    function ownerOf(uint256 node) external view returns (address) {
+        return nameWrapper.ownerOf(node);
+    }
+
     function setVerifier(address _verifier) external {
         require(
             _verifier != address(0) && !controllers[_verifier],

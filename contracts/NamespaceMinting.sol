@@ -14,7 +14,8 @@ contract NamespaceMinting is Controllable {
     event SubnameMinted(
         bytes32 indexed parentNode,
         string label,
-        uint256 price,
+        uint256 mintPrice,
+        uint256 mintFee,
         address indexed paymentReceiver,
         address sender,
         address subnameOwner
@@ -35,8 +36,6 @@ contract NamespaceMinting is Controllable {
         registry = INamespaceRegistry(_registry);
     }
 
-    // @context
-    // @param
     function mint(
         MintSubnameContext memory context,
         bytes memory signature
@@ -57,11 +56,17 @@ contract NamespaceMinting is Controllable {
             context.mintPrice,
             context.mintFee
         );
-        _emit(context, listing.paymentReceiver);
+         emit SubnameMinted(
+            context.parentNode,
+            context.subnameLabel,
+            context.mintPrice,
+            context.mintFee,
+            listing.paymentReceiver,
+            msg.sender,
+            context.subnameOwner
+        );
     }
 
-    // curently, all the info required for minting is calculated offchain and send via parameters with sigature
-    // maybe we can store listing prices on chain and use offchain for additional minting condition (whitelistings, reservations, tokenGated)
     function _mint(
         MintSubnameContext memory context,
         bytes memory signature
@@ -80,20 +85,6 @@ contract NamespaceMinting is Controllable {
     ) internal {
         payable(paymentReceiver).transfer(mintPrice);
         payable(treasury).transfer(mintFee);
-    }
-
-    function _emit(
-        MintSubnameContext memory context,
-        address paymentReceiver
-    ) internal {
-        emit SubnameMinted(
-            context.parentNode,
-            context.subnameLabel,
-            context.mintPrice,
-            paymentReceiver,
-            msg.sender,
-            context.subnameOwner
-        );
     }
 
     function setTreasury(address _treasury) external onlyController {
