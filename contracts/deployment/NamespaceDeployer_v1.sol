@@ -18,43 +18,48 @@ contract NamespaceDeployer {
         address _controller,
         address _nameWrapper
     ) {
-        // listing contract
-        NamespaceListing _listing = new NamespaceListing(
-            _controller,
-            nameWrapperDelegate,
-            _nameWrapper,
-            registry
-        );
-        listing = address(_listing);
-
-        // registry
-        NamespaceRegistry _registry = new NamespaceRegistry(address(_listing));
-        registry = address(_registry);
-
         // name wrapper delegate
         NameWrapperDelegate _nameWrapperDelegate = new NameWrapperDelegate(
             INameWrapper(_nameWrapper),
             _controller,
             _verifier
         );
-        nameWrapperDelegate = address(_nameWrapperDelegate);
+        address nameWrapperDelegateAddress = address(_nameWrapperDelegate);
+
+        // registry
+        NamespaceRegistry _registry = new NamespaceRegistry(_controller);
+        address registryAddress = address(_registry);
+        
+        // listing contract
+        NamespaceListing _listing = new NamespaceListing(
+            _controller,
+            nameWrapperDelegateAddress,
+            registryAddress
+        );
+        address listingAddress = address(_listing);
+
 
         // minting contract
         NamespaceMinting _minting = new NamespaceMinting(
             _treasury,
             _controller,
-            nameWrapperDelegate,
-            address(_registry)
+            nameWrapperDelegateAddress,
+            registryAddress
         );
-        minting = address(_minting);
+        address mintingAddress = address(_minting);
 
-        _nameWrapperDelegate.setController(listing, true);
-        _nameWrapperDelegate.setController(minting, true);
+        _nameWrapperDelegate.setController(listingAddress, true);
+        _nameWrapperDelegate.setController(mintingAddress, true);
 
         // ownership transfer
         _registry.transferOwnership(_controller);
         _minting.transferOwnership(_controller);
         _listing.transferOwnership(_controller);
         _nameWrapperDelegate.transferOwnership(_controller);
+
+        registry = registryAddress;
+        minting = mintingAddress;
+        listing = listingAddress;
+        nameWrapperDelegate = nameWrapperDelegateAddress;
     }
 }

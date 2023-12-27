@@ -1,6 +1,4 @@
-GOERLI
-    0x0bA238efE5161F9F37D2a0df3DB37d384a5Cd6A1  NamespaceRegistry Address
-    0x07315c55031b9318FFf1679B4796EF42E0d1E115  NamespaceOperations Address
 SEPOLIA
-    0xE05724722BFfe5DF8cB48C6cc4aD0591cf62822f  NamespaceRegistry Address
-    0x93CE2738D9b6395cFf9A0297C5A7b0f216C4ac50  NamespaceOperations Address
+    Minter address 0xDe205cb3c1CC6B1C963519824e136aA576cCe25b
+    Lister address 0x6B0fA384bE556534390F1239dc84acC05A944B50
+    NameWrapperDelegate address 0xCAd1617be838eC8282B6ff9E7Fd914067160051e
