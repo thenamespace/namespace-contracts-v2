@@ -50,6 +50,7 @@ contract NamespaceDeployer {
 
         _nameWrapperDelegate.setController(listingAddress, true);
         _nameWrapperDelegate.setController(mintingAddress, true);
+        _registry.setController(listingAddress, true);
 
         // ownership transfer
         _registry.transferOwnership(_controller);
