@@ -13,6 +13,7 @@ async function deploy() {
     nameWrapper,
   ]);
 
+  console.log(deployer, "DEPLOYER")
   await deployer.waitForDeployment();
   console.log("Minter address " + await deployer.minting());
   console.log("Lister address " + await deployer.listing());

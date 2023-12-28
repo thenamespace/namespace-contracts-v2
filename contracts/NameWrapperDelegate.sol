@@ -38,7 +38,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
         address _verifier
     ) Controllable(msg.sender, _controller) EIP712("namespace", "1") {
         require(_controller != _verifier, "Verifier can't be controller");
-
+        verifier = _verifier;
         nameWrapper = _nameWrapper;
     }
 
@@ -53,7 +53,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
             revert SignatureAlreadyUsed();
         }
 
-        if (_extractSigner(context, signature) != verifier) {
+        if ( _extractSigner(context, signature) != verifier) {
             revert InvalidSignature();
         }
 
