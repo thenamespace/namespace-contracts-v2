@@ -1,8 +1,15 @@
-require("@nomicfoundation/hardhat-toolbox");
+import { HardhatUserConfig } from "hardhat/config";
+import "hardhat-gas-reporter";
+import "hardhat-contract-sizer";
+import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
+import "@typechain/hardhat";
+import "solidity-coverage";
+import "./scripts/token_test";
+
 require("dotenv").config();
 
-/** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
+const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -19,20 +26,19 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      chainId: 31337,
+      chainId: 1337,
       allowUnlimitedContractSize: true,
       forking: {
-        url: "https://eth-goerli.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
-        blockNumber: 9613399,
+        url: "https://eth-sepolia.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
       },
     },
     sepolia: {
       url: "https://eth-sepolia.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
-      gasPrice: 14000000000,
+      gasPrice: 60000000000,
       gas: 30_000_000,
       // blockGasLimit: 210000,
       chainId: 11155111,
-      accounts: [process.env.ACCOUNT_KEY],
+      accounts: [process.env.ACCOUNT_KEY as string],
     },
     mainnet: {
       url: "https://eth-mainnet.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
@@ -40,7 +46,7 @@ module.exports = {
       gas: 21_000_000,
       // blockGasLimit: 210000,
       chainId: 1,
-      accounts: [process.env.ACCOUNT_KEY],
+      accounts: [process.env.ACCOUNT_KEY as string],
     },
   },
   mocha: {
@@ -50,3 +56,5 @@ module.exports = {
     apiKey: "",
   },
 };
+
+export default config;
