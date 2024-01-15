@@ -10,6 +10,7 @@ struct MintSubnameContext {
     uint256 mintPrice;
     uint256 mintFee;
     uint64 ttl;
+    uint64 expiry;
 }
 
 struct ListedENSName {

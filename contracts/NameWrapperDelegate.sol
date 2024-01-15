@@ -29,7 +29,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
 
     bytes32 constant MINT_CONTEXT =
         keccak256(
-            "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee)"
+            "MintContext(string subnameLabel,bytes32 parentNode,address resolver,address subnameOwner,uint32 fuses,uint256 mintPrice,uint256 mintFee,uint64 expiry)"
         );
 
     constructor(
@@ -44,8 +44,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
 
     function setSubnodeRecord(
         MintSubnameContext memory context,
-        bytes memory signature,
-        uint64 expiry
+        bytes memory signature
     ) external onlyController returns (bytes32) {
         bytes32 signatureHash = keccak256(signature);
 
@@ -67,7 +66,7 @@ contract NameWrapperDelegate is Controllable, EIP712 {
                 context.resolver,
                 context.ttl,
                 context.fuses,
-                expiry
+                context.expiry
             );
     }
 
@@ -89,7 +88,8 @@ contract NameWrapperDelegate is Controllable, EIP712 {
                     context.subnameOwner,
                     context.fuses,
                     context.mintPrice,
-                    context.mintFee
+                    context.mintFee,
+                    context.expiry
                 )
             )
         );
