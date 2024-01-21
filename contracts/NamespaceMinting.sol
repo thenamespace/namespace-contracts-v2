@@ -36,6 +36,7 @@ contract NamespaceMinting is Controllable {
         registry = INamespaceRegistry(_registry);
     }
 
+
     function mint(
         MintSubnameContext memory context,
         bytes memory signature
@@ -56,6 +57,7 @@ contract NamespaceMinting is Controllable {
             context.mintPrice,
             context.mintFee
         );
+
          emit SubnameMinted(
             context.parentNode,
             context.subnameLabel,
@@ -73,8 +75,7 @@ contract NamespaceMinting is Controllable {
     ) internal {
         NameWrapperDelegate(nameWrapperDelegate).setSubnodeRecord(
             context,
-            signature,
-            type(uint64).max
+            signature
         );
     }
 
