@@ -29,10 +29,22 @@ contract NamespaceListing is Controllable {
         wrapperProxy = INameWrapperProxy(_nameWrapperProxy);
     }
 
+    modifier isNameOwner(bytes32 node) {
+         address nameOwner = INameWrapper(nameWrapperAddress).ownerOf(
+            uint256(node)
+        );
+
+        if (nameOwner != msg.sender && !_isApprovedForAll(nameOwner, msg.sender)) {
+            revert NotNameOwner(msg.sender, nameOwner);
+        }
+        _;
+    }
+
     function list(
         string memory ensNameLabel,
         bytes32 nameNode,
         address paymentReceiver
+<<<<<<< HEAD
     ) external {
         require(_hasPermissions(msg.sender, nameNode), "Not permitted");
 
@@ -40,6 +52,9 @@ contract NamespaceListing is Controllable {
             nameNode,
             uint16(CANNOT_UNWRAP)
         );
+=======
+    ) external isNameOwner(nameNode) {
+>>>>>>> ddeb5a2 (test)
 
         registry.set(
             nameNode,

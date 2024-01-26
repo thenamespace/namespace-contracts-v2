@@ -15,7 +15,7 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 1,
+        runs: 200,
       },
       outputSelection: {
         "*": {
@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
       },
     },
     sepolia: {
-      url: "https://eth-sepolia.g.alchemy.com/v2/" + process.env.ALCHEMY_KEY,
+      url: "https://sepolia.infura.io/v3/bca36a71a62646ac9b71508e10cd5357",
       gasPrice: 60000000000,
       gas: 30_000_000,
       // blockGasLimit: 210000,

@@ -6,7 +6,10 @@ import {NamespaceMinting} from "../NamespaceMinting.sol";
 import {NamespaceListing} from "../NamespaceListing.sol";
 import {NameWrapperProxy, INameWrapperProxy} from "../NameWrapperProxy.sol";
 import {INamespaceRegistry} from "../INamespaceRegistry.sol";
+<<<<<<< HEAD
 import {INameWrapper} from "../ens/INameWrapper.sol";
+=======
+>>>>>>> ddeb5a2 (test)
 
 contract NamespaceDeployer {
     address public registry;
@@ -26,8 +29,12 @@ contract NamespaceDeployer {
         NamespaceRegistry namespaceRegistry = new NamespaceRegistry(_owner);
         address namespaceRegistryAddr = address(namespaceRegistry);
         
+<<<<<<< HEAD
         
         NameWrapperProxy wrapperProxy = new NameWrapperProxy(_nameWrapper);
+=======
+        NameWrapperProxy wrapperProxy = new NameWrapperProxy(_nameWrapper, namespaceRegistryAddr);
+>>>>>>> ddeb5a2 (test)
         address wrapperProxyAddress = address(wrapperProxy);
         
         NamespaceListing lister = new NamespaceListing(
@@ -37,7 +44,10 @@ contract NamespaceDeployer {
             namespaceRegistryAddr
         );
         address listerAddress = address(lister);
+<<<<<<< HEAD
     
+=======
+>>>>>>> ddeb5a2 (test)
         
         NamespaceMinting minter = new NamespaceMinting(
             _treasury,
@@ -58,6 +68,7 @@ contract NamespaceDeployer {
         // minter and lister should be able to call methods of wrapper proxy
         wrapperProxy.setController(listerAddress, true);
         wrapperProxy.setController(minterAddress, true);
+        wrapperProxy.setController(address(this), false);
         wrapperProxy.transferOwnership(_owner);
 
         lister.transferOwnership(_owner);
