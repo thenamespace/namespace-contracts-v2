@@ -13,6 +13,13 @@ struct MintSubnameContext {
     uint64 expiry;
 }
 
+struct MintParameters {
+    bytes data;
+    bytes signature;
+    bytes[] records;
+}
+
+
 struct ListedENSName {
     string label;
     bytes32 nameNode;
@@ -23,4 +30,8 @@ struct ListedENSName {
 struct ReverseRecord {
     bool set;
     string fullName;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a264043 (Test)
