@@ -1,27 +1,32 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ~0.8.20;
 
-import "./controllers/Controllable.sol";
-import "./INamespaceRegistry.sol";
-import "./NameWrapperDelegate.sol";
+import {Controllable} from "./controllers/Controllable.sol";
+import {INamespaceRegistry} from "./INamespaceRegistry.sol";
+import {INameWrapperProxy} from "./NameWrapperProxy.sol";
+import {INameWrapper, CANNOT_UNWRAP} from "./ens/INameWrapper.sol";
+import {ListedENSName} from "./Types.sol";
+
+error NotPermitted();
+error NameNotListed(string nameLabel);
 
 contract NamespaceListing is Controllable {
-    error NotNameOwner(address current, address expected);
-    error NameNotListed(string nameLabel);
-
     event NameListed(string nameLabel, bytes32 node, address operator);
     event NameUnlisted(string nameLabel, bytes32 node, address operator);
 
-    address public nameWrapperDelegate;
     INamespaceRegistry registry;
+    INameWrapperProxy wrapperProxy;
+    INameWrapper nameWrapper;
 
     constructor(
         address _controller,
-        address _nameWrapperDelegate,
+        address _nameWrapperProxy,
+        address _nameWrapper,
         address _registry
     ) Controllable(msg.sender, _controller) {
-        nameWrapperDelegate = _nameWrapperDelegate;
+        nameWrapper = INameWrapper(_nameWrapper);
         registry = INamespaceRegistry(_registry);
+        wrapperProxy = INameWrapperProxy(_nameWrapperProxy);
     }
 
     function list(
@@ -29,10 +34,9 @@ contract NamespaceListing is Controllable {
         bytes32 nameNode,
         address paymentReceiver
     ) external {
-        _isNameOwner(nameNode);
+        require(_hasPermissions(msg.sender, nameNode), "Not permitted");
 
-        // CANNOT_UNWRAP needs to be burned to allow minting unruggable subnames
-        NameWrapperDelegate(nameWrapperDelegate).setFuses(
+        wrapperProxy.setFuses(
             nameNode,
             uint16(CANNOT_UNWRAP)
         );
@@ -41,12 +45,12 @@ contract NamespaceListing is Controllable {
             nameNode,
             ListedENSName(ensNameLabel, nameNode, paymentReceiver, true)
         );
+
         emit NameListed(ensNameLabel, nameNode, msg.sender);
     }
 
     function unlist(string memory ensNameLabel, bytes32 nameNode) external {
-        _isNameOwner(nameNode);
-
+        require(_hasPermissions(msg.sender, nameNode), "Not permitted");
         if (!registry.get(nameNode).isListed) {
             revert NameNotListed(ensNameLabel);
         }
@@ -55,11 +59,17 @@ contract NamespaceListing is Controllable {
         emit NameUnlisted(ensNameLabel, nameNode, msg.sender);
     }
 
-    function _isNameOwner(bytes32 node) internal view {
-        address nameOwner = NameWrapperDelegate(nameWrapperDelegate).ownerOf(uint256(node));
+    function _hasPermissions(
+        address lister,
+        bytes32 node
+    ) internal view returns (bool) {
+        address nameOwner = nameWrapper.ownerOf(uint256(node));
 
-        if (nameOwner != msg.sender) {
-            revert NotNameOwner(msg.sender, nameOwner);
+        if (nameOwner == address(0)) {
+            return false;
         }
+        return
+            nameOwner == lister ||
+            nameWrapper.isApprovedForAll(nameOwner, lister);
     }
 }

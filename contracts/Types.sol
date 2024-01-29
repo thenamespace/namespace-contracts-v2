@@ -19,3 +19,8 @@ struct ListedENSName {
     address paymentReceiver;
     bool isListed;
 }
+
+struct ReverseRecord {
+    bool set;
+    string fullName;
+}

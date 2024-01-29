@@ -1,66 +1,70 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ~0.8.20;
 
-import "../NamespaceRegistry.sol";
-import "../NamespaceMinting.sol";
-import "../NamespaceListing.sol";
-import "../NameWrapperDelegate.sol";
+import {NamespaceRegistry} from "../NamespaceRegistry.sol";
+import {NamespaceMinting} from "../NamespaceMinting.sol";
+import {NamespaceListing} from "../NamespaceListing.sol";
+import {NameWrapperProxy, INameWrapperProxy} from "../NameWrapperProxy.sol";
+import {INamespaceRegistry} from "../INamespaceRegistry.sol";
+import {INameWrapper} from "../ens/INameWrapper.sol";
 
 contract NamespaceDeployer {
     address public registry;
     address public minting;
     address public listing;
     address public nameWrapperDelegate;
+    address public test;
 
     constructor(
         address _verifier,
         address _treasury,
-        address _controller,
-        address _nameWrapper
+        address _owner,
+        address _nameWrapper,
+        address _reverseRegistrar,
+        string memory minterVersion
     ) {
-        // name wrapper delegate
-        NameWrapperDelegate _nameWrapperDelegate = new NameWrapperDelegate(
-            INameWrapper(_nameWrapper),
-            _controller,
-            _verifier
-        );
-        address nameWrapperDelegateAddress = address(_nameWrapperDelegate);
-
-        // registry
-        NamespaceRegistry _registry = new NamespaceRegistry(_controller);
-        address registryAddress = address(_registry);
+        NamespaceRegistry namespaceRegistry = new NamespaceRegistry(_owner);
+        address namespaceRegistryAddr = address(namespaceRegistry);
         
-        // listing contract
-        NamespaceListing _listing = new NamespaceListing(
-            _controller,
-            nameWrapperDelegateAddress,
-            registryAddress
+        
+        NameWrapperProxy wrapperProxy = new NameWrapperProxy(_nameWrapper);
+        address wrapperProxyAddress = address(wrapperProxy);
+        
+        NamespaceListing lister = new NamespaceListing(
+            _owner,
+            wrapperProxyAddress,
+            _nameWrapper,
+            namespaceRegistryAddr
         );
-        address listingAddress = address(_listing);
-
-
-        // minting contract
-        NamespaceMinting _minting = new NamespaceMinting(
+        address listerAddress = address(lister);
+    
+        
+        NamespaceMinting minter = new NamespaceMinting(
             _treasury,
-            _controller,
-            nameWrapperDelegateAddress,
-            registryAddress
+            _owner,
+            wrapperProxyAddress,
+            _nameWrapper,
+            namespaceRegistryAddr,
+            _reverseRegistrar,
+            _verifier,
+            minterVersion
         );
-        address mintingAddress = address(_minting);
+        address minterAddress = address(minter);
 
-        _nameWrapperDelegate.setController(listingAddress, true);
-        _nameWrapperDelegate.setController(mintingAddress, true);
-        _registry.setController(listingAddress, true);
+        // lister should be able to set listed name records
+        namespaceRegistry.setController(listerAddress, true);
+        namespaceRegistry.transferOwnership(_owner);
 
-        // ownership transfer
-        _registry.transferOwnership(_controller);
-        _minting.transferOwnership(_controller);
-        _listing.transferOwnership(_controller);
-        _nameWrapperDelegate.transferOwnership(_controller);
+        // minter and lister should be able to call methods of wrapper proxy
+        wrapperProxy.setController(listerAddress, true);
+        wrapperProxy.setController(minterAddress, true);
+        wrapperProxy.transferOwnership(_owner);
 
-        registry = registryAddress;
-        minting = mintingAddress;
-        listing = listingAddress;
-        nameWrapperDelegate = nameWrapperDelegateAddress;
+        lister.transferOwnership(_owner);
+        minter.transferOwnership(_owner);
+
+        nameWrapperDelegate = wrapperProxyAddress;
+        listing = listerAddress;
+        minting = minterAddress;
     }
 }

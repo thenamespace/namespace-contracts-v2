@@ -1,4 +1,9 @@
-SEPOLIA
-    Minter address 0x8c40e4B2E6C88A5Bf31DA4429C20Cb479278901A
-    Lister address 0x107823E8698BD05F60D9261ef40CdAF2EAA600Dc
-    NameWrapperDelegate address 0x01777B945803E82f002b88c2377fA6E3FAb0616F
+{
+    "contractAddresses": {
+        "sepolia": {
+            "minter":"0x86512736F6FF54B2432001a64C3D13929796b8B2",
+            "lister":"0x2649e6164609c2483eae7c3a7B2407C0F6Fb4E07",
+            "wrapperProxy":"0xD2Ef9EaB412c1Db4E4Ce6774f771f71313d6e475"
+        }
+    }
+}
