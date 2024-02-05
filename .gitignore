@@ -5,3 +5,4 @@ artifacts
 .env
 .DS_Store
 typechain-types
+.env

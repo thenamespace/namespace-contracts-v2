@@ -5,7 +5,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "solidity-coverage";
-import "./scripts/token_test";
 
 require("dotenv").config();
 
@@ -13,6 +12,7 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 1,
