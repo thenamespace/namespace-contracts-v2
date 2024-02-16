@@ -8,8 +8,6 @@ import {ListedENSName} from "./Types.sol";
 contract NamespaceRegistry is INamespaceRegistry, Controllable {
     mapping(bytes32 => ListedENSName) listings;
 
-    constructor(address _controller) Controllable(msg.sender, _controller) {}
-
     function set(
         bytes32 node,
         ListedENSName calldata name

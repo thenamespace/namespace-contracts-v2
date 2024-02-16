@@ -2,8 +2,8 @@
 pragma solidity ~0.8.20;
 
 import {NamespaceRegistry} from "../NamespaceRegistry.sol";
-import {NamespaceMinting} from "../NamespaceMinting.sol";
-import {NamespaceListing} from "../NamespaceListing.sol";
+import {NamespaceMinter} from "../NamespaceMinting.sol";
+import {NamespaceLister} from "../NamespaceListing.sol";
 import {NameWrapperProxy, INameWrapperProxy} from "../NameWrapperProxy.sol";
 import {INamespaceRegistry} from "../INamespaceRegistry.sol";
 import {INameWrapper} from "../ens/INameWrapper.sol";
@@ -12,43 +12,37 @@ contract NamespaceDeployer {
     address public registry;
     address public minting;
     address public listing;
-    address public nameWrapperDelegate;
-    address public test;
+    address public proxy;
 
     constructor(
         address _verifier,
         address _treasury,
         address _owner,
-        address _nameWrapper,
-        address _reverseRegistrar,
+        address _nameWrapperAddr,
         string memory minterVersion
     ) {
-        NamespaceRegistry namespaceRegistry = new NamespaceRegistry(_owner);
+        NamespaceRegistry namespaceRegistry = new NamespaceRegistry();
         address namespaceRegistryAddr = address(namespaceRegistry);
-        
-        
-        NameWrapperProxy wrapperProxy = new NameWrapperProxy(_nameWrapper);
+
+        NameWrapperProxy wrapperProxy = new NameWrapperProxy(_nameWrapperAddr);
         address wrapperProxyAddress = address(wrapperProxy);
-        
-        NamespaceListing lister = new NamespaceListing(
-            _owner,
+
+        NamespaceLister lister = new NamespaceLister(
             wrapperProxyAddress,
-            _nameWrapper,
+            _nameWrapperAddr,
             namespaceRegistryAddr
         );
         address listerAddress = address(lister);
-    
-        
-        NamespaceMinting minter = new NamespaceMinting(
+
+        NamespaceMinter minter = new NamespaceMinter(
             _treasury,
-            _owner,
-            wrapperProxyAddress,
-            _nameWrapper,
-            namespaceRegistryAddr,
-            _reverseRegistrar,
             _verifier,
+            wrapperProxyAddress,
+            _nameWrapperAddr,
+            namespaceRegistryAddr,
             minterVersion
         );
+
         address minterAddress = address(minter);
 
         // lister should be able to set listed name records
@@ -63,8 +57,9 @@ contract NamespaceDeployer {
         lister.transferOwnership(_owner);
         minter.transferOwnership(_owner);
 
-        nameWrapperDelegate = wrapperProxyAddress;
+        proxy = wrapperProxyAddress;
         listing = listerAddress;
         minting = minterAddress;
+        registry = namespaceRegistryAddr;
     }
 }

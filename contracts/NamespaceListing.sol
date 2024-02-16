@@ -3,27 +3,29 @@ pragma solidity ~0.8.20;
 
 import {Controllable} from "./controllers/Controllable.sol";
 import {INamespaceRegistry} from "./INamespaceRegistry.sol";
-import {INameWrapperProxy} from "./NameWrapperProxy.sol";
+import {INameWrapperProxy} from "./INameWrapperProxy.sol";
 import {INameWrapper, CANNOT_UNWRAP} from "./ens/INameWrapper.sol";
 import {ListedENSName} from "./Types.sol";
 
 error NotPermitted();
 error NameNotListed(string nameLabel);
 
-contract NamespaceListing is Controllable {
+contract NamespaceLister is Controllable {
     event NameListed(string nameLabel, bytes32 node, address operator);
     event NameUnlisted(string nameLabel, bytes32 node, address operator);
+
+    bytes32 private constant ETH_NODE =
+        0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae;
 
     INamespaceRegistry registry;
     INameWrapperProxy wrapperProxy;
     INameWrapper nameWrapper;
 
     constructor(
-        address _controller,
         address _nameWrapperProxy,
         address _nameWrapper,
         address _registry
-    ) Controllable(msg.sender, _controller) {
+    ) {
         nameWrapper = INameWrapper(_nameWrapper);
         registry = INamespaceRegistry(_registry);
         wrapperProxy = INameWrapperProxy(_nameWrapperProxy);
@@ -31,15 +33,13 @@ contract NamespaceListing is Controllable {
 
     function list(
         string memory ensNameLabel,
-        bytes32 nameNode,
         address paymentReceiver
     ) external {
+        bytes32 nameNode = _namehash(ETH_NODE, ensNameLabel);
+
         require(_hasPermissions(msg.sender, nameNode), "Not permitted");
 
-        wrapperProxy.setFuses(
-            nameNode,
-            uint16(CANNOT_UNWRAP)
-        );
+        wrapperProxy.setFuses(nameNode, uint16(CANNOT_UNWRAP));
 
         registry.set(
             nameNode,
@@ -49,7 +49,9 @@ contract NamespaceListing is Controllable {
         emit NameListed(ensNameLabel, nameNode, msg.sender);
     }
 
-    function unlist(string memory ensNameLabel, bytes32 nameNode) external {
+    function unlist(string memory ensNameLabel) external {
+        bytes32 nameNode = _namehash(ETH_NODE, ensNameLabel);
+
         require(_hasPermissions(msg.sender, nameNode), "Not permitted");
         if (!registry.get(nameNode).isListed) {
             revert NameNotListed(ensNameLabel);
@@ -71,5 +73,20 @@ contract NamespaceListing is Controllable {
         return
             nameOwner == lister ||
             nameWrapper.isApprovedForAll(nameOwner, lister);
+    }
+
+      function setNameWrapper(address _nameWrapper) external onlyOwner {
+        nameWrapper = INameWrapper(_nameWrapper);
+    }
+
+    function _namehash(
+        bytes32 parentNode,
+        string memory nameLabel
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(parentNode, _labelhash(nameLabel)));
+    }
+
+    function _labelhash(string memory label) internal pure returns (bytes32) {
+        return keccak256(bytes(label));
     }
 }
