@@ -1,13 +1,12 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ~0.8.20;
 
-import {MintSubnameContext, ListedENSName, ReverseRecord} from "./Types.sol";
+import {MintSubnameContext, ListedENSName } from "./Types.sol";
 import {Controllable} from "./controllers/Controllable.sol";
 import {INamespaceRegistry} from "./INamespaceRegistry.sol";
 import {INameWrapper} from "./ens/INameWrapper.sol";
 import {IPublicResolver} from "./ens/IPublicResolver.sol";
-import {IReverseRegistrar} from "./ens/IReverseRegistar.sol";
-import {INameWrapperProxy} from "./NameWrapperProxy.sol";
+import {INameWrapperProxy} from "./INameWrapperProxy.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
@@ -15,7 +14,7 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 error NameNotListed(bytes32 node);
 error NotEnoughFunds(uint256 current, uint256 expected);
 
-contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
+contract NamespaceMinter is Controllable, EIP712, ERC1155Holder {
     event SubnameMinted(
         bytes32 indexed parentNode,
         string label,
@@ -36,25 +35,21 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
     INamespaceRegistry registry;
     INameWrapperProxy wrapperProxy;
     INameWrapper nameWrapper;
-    IReverseRegistrar reverseRegistrar;
 
     mapping(bytes32 => bool) signatures;
 
     constructor(
         address _treasury,
-        address _controller,
+        address _verifier,
         address _nameWrapperProxy,
         address _nameWrapper,
         address _namespaceRegistry,
-        address _reverseRegistar,
-        address _verifier,
         string memory version
-    ) Controllable(msg.sender, _controller) EIP712("namespace", version) {
+    ) EIP712("namespace", version) {
         treasury = _treasury;
         verifier = _verifier;
         nameWrapper = INameWrapper(_nameWrapper);
         wrapperProxy = INameWrapperProxy(_nameWrapperProxy);
-        reverseRegistrar = IReverseRegistrar(_reverseRegistar);
         registry = INamespaceRegistry(_namespaceRegistry);
     }
 
@@ -96,14 +91,14 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
     function mintWithData(
         MintSubnameContext calldata context,
         bytes calldata signature,
-        ReverseRecord calldata reverseRecord,
         bytes[] calldata data
     ) external payable {
-        if (data.length == 0 && !reverseRecord.set) {
-            this.mint(context, signature);
+        
+        if (data.length == 0) {
+            this.mint(context,signature);
             return;
         }
-
+    
         require(
             context.resolver != address(0),
             "Resolver address must be set when updating records"
@@ -123,17 +118,7 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
             context.expiry
         );
 
-        if (data.length > 0) {
-            _setRecords(context.resolver, subnameNode, data);
-        }
-
-        if (reverseRecord.set) {
-            _setReverseRecord(
-                context.subnameOwner,
-                context.resolver,
-                reverseRecord.fullName
-            );
-        }
+        _setRecords(context.resolver, subnameNode, data);
 
         nameWrapper.safeTransferFrom(
             address(this),
@@ -181,11 +166,11 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
         payable(treasury).transfer(mintFee);
     }
 
-    function setTreasury(address _treasury) external onlyController {
+    function setTreasury(address _treasury) external onlyOwner() {
         treasury = _treasury;
     }
 
-    function withdraw() external onlyController {
+    function withdraw() external onlyOwner() {
         require(address(this).balance > 0, "No funds present.");
         payable(treasury).transfer(address(this).balance);
     }
@@ -194,7 +179,6 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
         MintSubnameContext memory context,
         bytes memory signature
     ) internal {
-        // do we need this? We will reduce gas by removing
         bytes32 signatureHash = keccak256(signature);
         require(!signatures[signatureHash], "Signature already used");
 
@@ -235,14 +219,6 @@ contract NamespaceMinting is Controllable, EIP712, ERC1155Holder {
     ) internal {
         IPublicResolver resolver = IPublicResolver(resolverAddress);
         resolver.multicallWithNodeCheck(subnameNode, data);
-    }
-
-    function _setReverseRecord(
-        address owner,
-        address resolver,
-        string memory fullName
-    ) internal {
-        reverseRegistrar.setNameForAddr(owner, owner, resolver, fullName);
     }
 
     function setVerifier(address _verifier) external onlyOwner {
