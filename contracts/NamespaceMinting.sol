@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ~0.8.20;
 
-import {MintSubnameContext, ListedENSName } from "./Types.sol";
+import {MintSubnameContext, ListedENSName} from "./Types.sol";
 import {Controllable} from "./controllers/Controllable.sol";
 import {INamespaceRegistry} from "./INamespaceRegistry.sol";
 import {INameWrapper} from "./ens/INameWrapper.sol";
@@ -93,12 +93,11 @@ contract NamespaceMinter is Controllable, EIP712, ERC1155Holder {
         bytes calldata signature,
         bytes[] calldata data
     ) external payable {
-        
         if (data.length == 0) {
-            this.mint(context,signature);
+            this.mint(context, signature);
             return;
         }
-    
+
         require(
             context.resolver != address(0),
             "Resolver address must be set when updating records"
@@ -162,17 +161,33 @@ contract NamespaceMinter is Controllable, EIP712, ERC1155Holder {
     ) internal {
         require(msg.value >= mintFee + mintPrice, "Insufficient funds");
 
-        payable(paymentReceiver).transfer(mintPrice);
-        payable(treasury).transfer(mintFee);
+        (bool paymentReceived, ) = payable(paymentReceiver).call{
+            value: mintPrice
+        }("");
+        require(paymentReceived, "Payment receiver call failed");
+
+        (bool treasuryPaid, ) = payable(treasury).call{value: mintFee}("");
+        require(treasuryPaid, "Treasury call failed");
+
+        uint256 refund = msg.value - mintFee - mintPrice;
+
+        (bool refunded, ) = payable(msg.sender).call{value: refund}("");
+        require(refunded, "Refund failed");
     }
 
-    function setTreasury(address _treasury) external onlyOwner() {
+    function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "Invalid treasury address");
+
         treasury = _treasury;
     }
 
-    function withdraw() external onlyOwner() {
+    function withdraw() external onlyOwner {
         require(address(this).balance > 0, "No funds present.");
-        payable(treasury).transfer(address(this).balance);
+
+        (bool withdrawn, ) = payable(treasury).call{
+            value: address(this).balance
+        }("");
+        require(withdrawn, "Withdrawal failed");
     }
 
     function _verifySignature(

@@ -20,6 +20,8 @@ contract TreasuryProxy is Ownable {
     }
 
     function setTreasury(address payable _treasury) external onlyOwner {
+        require(_treasury != address(0), "Invalid treasury address");
+
         treasury = _treasury;
     }
 }
