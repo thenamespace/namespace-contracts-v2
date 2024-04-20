@@ -10,9 +10,9 @@ interface ISubnameRegistar {
         address owner,
         address resolver,
         uint64 expiry
-    ) public;
+    ) external;
 
-    function ownerOf(uint256 tokenId) public view returns (address)
+    function ownerOf(uint256 tokenId) external view returns (address);
 }
 
 contract SubnameRegistar is ERC721, Controllable {
@@ -27,10 +27,7 @@ contract SubnameRegistar is ERC721, Controllable {
         address resolver
     );
 
-    constructor()
-        ERC721("NamespaceENSSubname", "ENS")
-        Controllable(msg.sender)
-    {}
+    constructor() ERC721("NamespaceENSSubname", "ENS") Controllable() {}
 
     function mintSubname(
         bytes32 subnameNode,
@@ -38,13 +35,15 @@ contract SubnameRegistar is ERC721, Controllable {
         address resolver,
         uint64 expiry
     ) external onlyController {
-
         require(
             expiry > block.timestamp,
             "Expiry must be greater than block timestamp"
         );
 
-        require(_unexpiredOwner(subnameNode) == address(0), "Name already taken");
+        require(
+            _unexpiredOwner(subnameNode) == address(0),
+            "Name already taken"
+        );
 
         resolvers[subnameNode] = resolver;
         expirations[subnameNode] = expiry;
@@ -63,16 +62,19 @@ contract SubnameRegistar is ERC721, Controllable {
         emit ResolverSet(subnameNode, resolver);
     }
 
-    function ownerOf(uint256 tokenId) public override view virtual returns (address) {
+    function ownerOf(
+        uint256 tokenId
+    ) public view virtual override returns (address) {
         return _unexpiredOwner(bytes32(tokenId));
     }
 
-    function _unexpiredOwner(bytes32 subnameNode) internal view returns (address) {
-    
+    function _unexpiredOwner(
+        bytes32 subnameNode
+    ) internal view returns (address) {
         if (expirations[subnameNode] < block.timestamp) {
             return address(0);
         }
 
-        return  _requireOwned(uint256(subnameNode));
+        return _requireOwned(uint256(subnameNode));
     }
 }

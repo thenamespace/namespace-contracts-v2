@@ -29,7 +29,7 @@ contract SubnameRegistarController is Controllable, EIP712 {
         address _treasury,
         address _registar,
         string memory version
-    ) EIP712("namespace", version) Controllable(msg.sender) {
+    ) EIP712("namespace", version) Controllable() {
         verifier = _verifier;
         treasury = _treasury;
         registar = ISubnameRegistar(_registar);
@@ -49,9 +49,14 @@ contract SubnameRegistarController is Controllable, EIP712 {
 
         require(totalPrice >= msg.value, "Not enough funds");
 
-        bytes32 nameNode = _namehash(context.subnameLabel, context.parentNode);
+        bytes32 nameNode = _namehash(context.parentNode, context.subnameLabel);
 
-        registar.mintSubname(nameNode, context.subnameOwner, context.expiry);
+        registar.mintSubname(
+            nameNode,
+            context.subnameOwner,
+            context.resolver,
+            context.expiry
+        );
         _transferFunds(context);
 
         emit SubnameMinted(
@@ -63,12 +68,12 @@ contract SubnameRegistarController is Controllable, EIP712 {
     }
 
     function _transferFunds(MintL2SubnameContext memory context) internal {
-        bool sentToOwner = payable(context.paymentReceiver).call{
-            value: context.mintPrice
+        (bool sentToOwner, bytes memory pData) = payable(
+            context.paymentReceiver
+        ).call{value: context.mintPrice}("");
+        (bool sentToTreasury, bytes memory tData) = payable(treasury).call{
+            value: context.mintFee
         }("");
-        bool sentToTreasury = payable(treasury).call{value: context.mintFee}(
-            ""
-        );
         require(sentToOwner && sentToTreasury, "Could not transfer ETH");
     }
 
@@ -109,7 +114,11 @@ contract SubnameRegistarController is Controllable, EIP712 {
         verifier = _verifier;
     }
 
-    function transfer(address receiver, uint256 amount) onlyOwner {
+    function transfer(address receiver, uint256 amount) external onlyOwner {
         require(address(this).balance >= amount, "Not enough funds");
+    }
+
+    function _labelhash(string memory label) internal pure returns (bytes32) {
+        return keccak256(bytes(label));
     }
 }
