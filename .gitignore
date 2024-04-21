@@ -6,3 +6,4 @@ artifacts
 .DS_Store
 typechain-types
 .env
+ignition/deployments
