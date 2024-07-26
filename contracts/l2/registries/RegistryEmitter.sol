@@ -25,8 +25,7 @@ contract RegistryEmitter is Controllable, IRegistryEmitter {
         string label,
         bytes32 node,
         bytes32 indexed parentNode,
-        uint256 expiry,
-        address resolver
+        uint256 expiry
     );
     event DelegateChanged(address delegate, bool approved);
     event ExpirySet(bytes32 node, uint256 expiry);
@@ -52,10 +51,9 @@ contract RegistryEmitter is Controllable, IRegistryEmitter {
         string memory label,
         bytes32 node,
         bytes32 parentNode,
-        uint256 expiry,
-        address resolver
+        uint256 expiry
     ) external isApprovedEmitter {
-        emit NodeCreated(label, node, parentNode, expiry, resolver);
+        emit NodeCreated(label, node, parentNode, expiry);
     }
 
     function emitExpirySet(

@@ -15,7 +15,6 @@ abstract contract RegistryMinter {
         bytes32 parentNode,
         bytes32 node,
         address owner,
-        address resolver,
         uint256 price,
         uint256 fee,
         address paymentReceiver,
@@ -50,7 +49,6 @@ abstract contract RegistryMinter {
             context.parentNode,
             node,
             context.owner,
-            context.resolver,
             context.price,
             context.fee,
             context.paymentReceiver,
@@ -66,7 +64,6 @@ abstract contract RegistryMinter {
         bytes32 node = IEnsNameRegistry(registryAddress).register(
             context.label,
             context.owner,
-            context.resolver,
             context.expiry
         );
         getRegistryResolver().setNodeRegistry(node, registryAddress);
@@ -81,12 +78,11 @@ abstract contract RegistryMinter {
         bytes32 node = IEnsNameRegistry(registryAddress).register(
             context.label,
             address(this),
-            context.resolver,
             context.expiry
         );
 
         getRegistryResolver().setNodeRegistry(node, registryAddress);
-        setRecordsWithMulticall(context.resolver, resolverData);
+        setRecordsWithMulticall(resolverData);
 
         uint256 tokenId = uint256(node);
         IEnsNameRegistry(registryAddress).transferFrom(
@@ -127,10 +123,9 @@ abstract contract RegistryMinter {
     }
 
     function setRecordsWithMulticall(
-        address resolver,
         bytes[] memory resolverData
     ) internal {
-        IMulticallable(resolver).multicall(resolverData);
+        IMulticallable(getResolver()).multicall(resolverData);
     }
 
     function getRegistryResolver()
@@ -140,4 +135,6 @@ abstract contract RegistryMinter {
         returns (INodeRegistryResolver);
 
     function getTreasury() internal view virtual returns (address);
+
+    function getResolver() internal view virtual returns (address);
 }

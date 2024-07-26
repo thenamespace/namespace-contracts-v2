@@ -40,7 +40,6 @@ abstract contract RegistryFactory {
             context.tokenSymbol,
             getRegistryURI(),
             context.owner,
-            context.resolver,
             nameNode,
             address(getEmitter())
         );

@@ -4,7 +4,6 @@ const MintContextTypes = {
   MintContext: [
     { name: "label", type: "string" },
     { name: "parentNode", type: "bytes32" },
-    { name: "resolver", type: "address" },
     { name: "owner", type: "address" },
     { name: "price", type: "uint256" },
     { name: "fee", type: "uint256" },
@@ -20,7 +19,6 @@ const FactoryContextTypes = {
     { name: "label", type: "string" },
     { name: "TLD", type: "string" },
     { name: "owner", type: "address" },
-    { name: "resolver", type: "address" },
     { name: "parentControl", type: "uint8" },
     { name: "expirableType", type: "uint8" },
   ],
@@ -42,7 +40,6 @@ export interface MintContext {
   owner: Address;
   label: string;
   parentNode: Hash;
-  resolver: Address;
   price: bigint;
   fee: bigint;
   paymentReceiver: Address;
@@ -55,7 +52,6 @@ export interface FactoryContext {
   label: string;
   TLD: string;
   owner: Address;
-  resolver: Address;
   parentControl: number;
   expirableType: number;
 }
@@ -84,7 +80,6 @@ export const generateMintContextSignature = async (
   const message = {
     label: context.label,
     parentNode: context.parentNode,
-    resolver: context.resolver,
     owner: context.owner,
     price: context.price,
     fee: context.fee,
@@ -150,7 +145,6 @@ export const generateFactoryContextSignature = async (
     label: context.label,
     TLD: context.TLD,
     owner: context.owner,
-    resolver: context.resolver,
     parentControl: context.parentControl,
     expirableType: context.expirableType,
   };

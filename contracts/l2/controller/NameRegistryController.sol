@@ -32,18 +32,21 @@ contract NameRegistryController is
     IRegistryEmitter emitter;
     address public treasury;
     string public registryMetadataURI;
+    address public resolver;
 
     constructor(
         address _verifier,
         address _treasury,
         string memory _baseUri,
         address _registryResolver,
-        address _emitter
+        address _emitter,
+        address _resolver
     ) SignatureVerifier(_verifier) Ownable(_msgSender()) {
         registryMetadataURI = _baseUri;
         registryResolver = INodeRegistryResolver(_registryResolver);
         emitter = IRegistryEmitter(_emitter);
         treasury = _treasury;
+        resolver = _resolver;
     }
 
     /**
@@ -137,6 +140,10 @@ contract NameRegistryController is
 
     function getEmitter() internal view override returns (IRegistryEmitter) {
         return emitter;
+    }
+
+    function getResolver() internal view override returns(address) {
+        return resolver;
     }
 
     function _owner()

@@ -31,7 +31,6 @@ contract SignatureVerifier is EIP712 {
                     keccak256(abi.encodePacked(context.label)),
                     keccak256(abi.encodePacked(context.TLD)),
                     context.owner,
-                    context.resolver,
                     context.parentControl,
                     context.expirableType
                 )
@@ -50,7 +49,6 @@ contract SignatureVerifier is EIP712 {
                     MINT_CONTEXT,
                     keccak256(abi.encodePacked(context.label)),
                     context.parentNode,
-                    context.resolver,
                     context.owner,
                     context.price,
                     context.fee,

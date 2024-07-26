@@ -11,6 +11,8 @@ import {INodeRegistryResolver} from "./INodeRegistryResolver.sol";
  */
 contract NodeRegistryResolver is INodeRegistryResolver, Controllable {
     mapping(bytes32 => address) public nodeRegistries;
+    mapping(uint256 => address) public versionedControllers;
+    uint256 version = 1;
 
     event NodeSet(bytes32 node, address registrar);
 

@@ -9,8 +9,12 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 abstract contract RegistryExpiryExtender is ReentrancyGuard {
     event ExpiryExtended(bytes32 node, uint256 expiration);
 
-    function _extendExpiry(ExtendExpiryContext memory context) nonReentrant internal {
-        address registrarAddress = getRegistryResolver().nodeRegistries(context.node);
+    function _extendExpiry(
+        ExtendExpiryContext memory context
+    ) internal nonReentrant {
+        address registrarAddress = getRegistryResolver().nodeRegistries(
+            context.node
+        );
 
         require(registrarAddress != address(0), "Registrar not found");
 
@@ -50,7 +54,11 @@ abstract contract RegistryExpiryExtender is ReentrancyGuard {
         }
     }
 
-    function getRegistryResolver() internal view virtual returns (INodeRegistryResolver);
+    function getRegistryResolver()
+        internal
+        view
+        virtual
+        returns (INodeRegistryResolver);
 
     function getTreasury() internal view virtual returns (address);
 }

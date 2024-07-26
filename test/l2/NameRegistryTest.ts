@@ -154,7 +154,6 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenOwner.account.address,
-          RESOLVER_ADDRESS,
           BigInt(oneYearExpiry),
         ],
         {
@@ -179,7 +178,6 @@ describe("EnsNameRegistry", () => {
           [
             subnameLabel + "123",
             tokenOwner.account.address,
-            RESOLVER_ADDRESS,
             BigInt(oneYearExpiry),
           ],
           {
@@ -194,7 +192,6 @@ describe("EnsNameRegistry", () => {
           [
             subnameLabel,
             tokenOwner.account.address,
-            RESOLVER_ADDRESS,
             BigInt(oneYearExpiry),
           ],
           {
@@ -216,7 +213,6 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenDelegate.account.address,
-          RESOLVER_ADDRESS,
           BigInt(oneYearExpiry + ONE_YEAR_EXPIRY_SECONDS),
         ],
         {
@@ -247,7 +243,6 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenOwner.account.address,
-          RESOLVER_ADDRESS,
           BigInt(oneYearExpiry),
         ],
         {
@@ -286,7 +281,6 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenOwner.account.address,
-          RESOLVER_ADDRESS,
           BigInt(oneYearExpiry),
         ],
         {
@@ -324,7 +318,7 @@ describe("EnsNameRegistry", () => {
       const node = namehash(fullName);
 
       const tx = await registry.write.register(
-        [subnameLabel, tokenOwner.account.address, RESOLVER_ADDRESS, BigInt(0)],
+        [subnameLabel, tokenOwner.account.address, BigInt(0)],
         {
           account: tokenDelegate.account,
         }
@@ -351,7 +345,7 @@ describe("EnsNameRegistry", () => {
       await publicClient.waitForTransactionReceipt({ hash: tx01 });
 
       const tx = await registry.write.register(
-        [subnameLabel, tokenOwner.account.address, RESOLVER_ADDRESS, BigInt(0)],
+        [subnameLabel, tokenOwner.account.address, BigInt(0)],
         {
           account: tokenOwner.account,
         }
@@ -378,7 +372,6 @@ describe("EnsNameRegistry", () => {
         [
           ["test3", "test2", "test1"],
           tokenOwner.account.address,
-          RESOLVER_ADDRESS,
           BigInt(0),
         ],
         {

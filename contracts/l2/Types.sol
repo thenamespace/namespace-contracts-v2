@@ -2,14 +2,13 @@
 pragma solidity ^0.8.24;
 
 bytes32 constant MINT_CONTEXT = keccak256(
-    "MintContext(string label,bytes32 parentNode,address resolver,address owner,uint256 price,uint256 fee,address paymentReceiver,uint256 expiry)"
+    "MintContext(string label,bytes32 parentNode,address owner,uint256 price,uint256 fee,address paymentReceiver,uint256 expiry)"
 );
 
 struct MintContext {
     address owner;
     string label;
     bytes32 parentNode;
-    address resolver;
     uint256 price;
     uint256 fee;
     address paymentReceiver;
@@ -17,7 +16,7 @@ struct MintContext {
 }
 
 bytes32 constant FACTORY_CONTEXT = keccak256(
-    "FactoryContext(string tokenName,string tokenSymbol,string label,string TLD,address owner,address resolver,uint8 parentControl,uint8 expirableType)"
+    "FactoryContext(string tokenName,string tokenSymbol,string label,string TLD,address owner,uint8 parentControl,uint8 expirableType)"
 );
 
 struct FactoryContext {
@@ -28,7 +27,6 @@ struct FactoryContext {
     string label;
     string TLD;
     address owner;
-    address resolver;
 }
 
 struct ExtendExpiryContext {

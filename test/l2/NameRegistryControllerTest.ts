@@ -30,7 +30,7 @@ describe("NameRegistrarController", () => {
       const { controller, mintRequest, factoryContext, nodeResolver } =
         await loadFixture(controllerFullFlowFixture);
 
-      const mintEvents = await controller.getEvents.SubnameMinted();
+      const mintEvents = await controller.getEvents.NameMinted();
       expect(mintEvents.length).to.equal(1);
       const event = mintEvents[0];
 
@@ -83,7 +83,6 @@ describe("NameRegistrarController", () => {
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
         price: BigInt(0),
-        resolver: resolver.address,
       };
 
       const fullSubname = `${mintContext.label}.${registrarName}`;
@@ -159,7 +158,6 @@ describe("NameRegistrarController", () => {
         label: "testlabel",
         owner: owner.account.address,
         parentControl: 0,
-        resolver: zeroAddress,
         TLD: "com",
         tokenName: "Token",
         tokenSymbol: "TKN",
@@ -223,7 +221,6 @@ describe("NameRegistrarController", () => {
         label: "expirable",
         owner: owner.account.address,
         parentControl: 0,
-        resolver: resolver.address,
         TLD: "xyz",
         tokenName: "Token",
         tokenSymbol: "TKN",
@@ -250,7 +247,6 @@ describe("NameRegistrarController", () => {
         owner: owner.account.address,
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
-        resolver: zeroAddress,
       };
 
       const subnameNode = namehash(`testing.expirable.xyz`);
@@ -339,7 +335,6 @@ describe("NameRegistrarController", () => {
         label: "expirable",
         owner: owner.account.address,
         parentControl: 0,
-        resolver: resolver.address,
         TLD: "xyz",
         tokenName: "Token",
         tokenSymbol: "TKN",
@@ -372,8 +367,7 @@ describe("NameRegistrarController", () => {
         owner: owner.account.address,
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
-        price: BigInt(0),
-        resolver: resolver.address,
+        price: BigInt(0)
       };
 
       const mintSignature = await generateMintContextSignature(
@@ -442,7 +436,6 @@ describe("NameRegistrarController", () => {
         parentNode: NAME_NODE,
         paymentReceiver: owner.account.address,
         price: BigInt(10000000),
-        resolver: resolver.address,
       };
 
       const mintSig = await generateMintContextSignature(
@@ -462,7 +455,6 @@ describe("NameRegistrarController", () => {
         label: "test",
         owner: owner.account.address,
         parentControl: 0,
-        resolver: resolver.address,
         TLD: "eth",
         tokenName: "Name",
         tokenSymbol: "Symbol",
@@ -510,7 +502,6 @@ describe("NameRegistrarController", () => {
         parentNode: NAME_NODE,
         paymentReceiver: owner.account.address,
         price: price,
-        resolver: resolver.address,
       };
       const mintSig = await generateMintContextSignature(
         mintContext,

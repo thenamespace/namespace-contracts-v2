@@ -20,16 +20,18 @@ contract NamespaceL2Deployer {
     ) {
         NodeRegistryResolver _registryResolver = new NodeRegistryResolver();
         RegistryEmitter _emitter = new RegistryEmitter();
-
+        NamePublicResolver _resolver = new NamePublicResolver(
+            address(_registryResolver)
+        );
+        
         NameRegistryController _controller = new NameRegistryController(
             _verifier,
             _treasury,
             baseUri,
             address(_registryResolver),
-            address(_emitter)
+            address(_emitter),
+            address(_resolver)
         );
-
-        NamePublicResolver _resolver = new NamePublicResolver(address(_registryResolver));
 
         _emitter.setController(address(_controller), true);
         _registryResolver.setController(address(_controller), true);

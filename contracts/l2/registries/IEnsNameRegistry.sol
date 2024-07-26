@@ -15,15 +15,8 @@ struct RegistryConfig {
     string tokenSymbol;
     string metadataUri;
     address tokenOwner;
-    address tokenResolver;
     bytes32 namehash;
     address emitter;
-}
-
-struct NodeRecord {
-    string label;
-    uint256 expiry;
-    address resolver;
 }
 
 interface IEnsNameRegistry {
@@ -37,9 +30,13 @@ interface IEnsNameRegistry {
 
     // Ens related functions
     function register(
+        string[] memory labels,
+        address owner,
+        uint256 expiry
+    ) external returns (bytes32);
+    function register(
         string memory label,
         address owner,
-        address resolver,
         uint256 expiration
     ) external returns (bytes32);
     function setExpiry(bytes32 node, uint256 expiration) external;

@@ -15,14 +15,13 @@ import "./IEnsNameRegistry.sol";
  */
 contract EnsNameRegistry is ERC721, Controllable {
     mapping(bytes32 => uint256) public expiries;
-    mapping(bytes32 => address) public resolvers;
     RegistryConfig public config;
     IRegistryEmitter emitter;
 
     modifier registryTokenOwner() {
         require(
             ownerOf(uint256(registryNameNode())) == _msgSender(),
-            "Not allowed"
+            "Not registry token owner"
         );
         _;
     }
@@ -32,11 +31,7 @@ contract EnsNameRegistry is ERC721, Controllable {
     ) ERC721(_config.tokenName, _config.tokenSymbol) {
         emitter = IRegistryEmitter(_config.emitter);
         config = _config;
-        _mintNameToken(
-            _config.namehash,
-            _config.tokenOwner,
-            _config.tokenResolver
-        );
+        _mintNameToken(_config.namehash, _config.tokenOwner);
     }
 
     /**
@@ -44,17 +39,18 @@ contract EnsNameRegistry is ERC721, Controllable {
      * Allows for minting subname with multiple levels (e.g., lvl3.lvl2.lvl1.example.eth).
      * @param labels Array of subname labels.
      * @param owner Address of the new subname owner.
-     * @param resolver Address of the resolver contract where records are stored.
      * @param expiry Optional expiry timestamp for the subname.
      * @return bytes32 Hash representation of the registered subname.
      */
     function register(
         string[] memory labels,
         address owner,
-        address resolver,
         uint256 expiry
     ) external onlyController returns (bytes32) {
-        require(labels.length > 0 && labels.length < 10, "Labels length invalid");
+        require(
+            labels.length > 0 && labels.length < 10,
+            "Labels length invalid"
+        );
 
         if (labels.length > 1) {
             string memory _label = "";
@@ -67,10 +63,10 @@ contract EnsNameRegistry is ERC721, Controllable {
                     _label = string.concat(_label, ".");
                 }
             }
-            return _register(_label, node, owner, resolver, expiry);
+            return _register(_label, node, owner, expiry);
         } else {
             bytes32 node = EnsUtils.namehash(registryNameNode(), labels[0]);
-            return _register(labels[0], node, owner, resolver, expiry);
+            return _register(labels[0], node, owner, expiry);
         }
     }
 
@@ -79,18 +75,16 @@ contract EnsNameRegistry is ERC721, Controllable {
      * Handles simple subnames (e.g., subname.example.eth).
      * @param label Single subname label.
      * @param owner Address of the new subname owner.
-     * @param resolver Address of the resolver contract where records are stored.
      * @param expiry Optional expiry timestamp for the subname.
      * @return bytes32 Hash representation of the registered subname.
      */
     function register(
         string memory label,
         address owner,
-        address resolver,
         uint256 expiry
     ) external onlyController returns (bytes32) {
         bytes32 node = EnsUtils.namehash(registryNameNode(), label);
-        return _register(label, node, owner, resolver, expiry);
+        return _register(label, node, owner, expiry);
     }
 
     /**
@@ -119,7 +113,6 @@ contract EnsNameRegistry is ERC721, Controllable {
     function burn(bytes32 node) public registryTokenOwner {
         if (_isControllable()) {
             _burn(uint256(node));
-            delete resolvers[node];
             delete expiries[node];
 
             emitter.emitNodeBurned(node, registryNameNode(), _msgSender());
@@ -182,7 +175,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         string memory label,
         bytes32 node,
         address owner,
-        address resolver,
         uint256 expiry
     ) internal returns (bytes32) {
         _isValidExpiry(expiry);
@@ -198,33 +190,20 @@ contract EnsNameRegistry is ERC721, Controllable {
             _burn(token);
         }
 
-        resolvers[node] = resolver;
         if (_isExpirable()) {
             expiries[node] = expiry;
         }
 
         _mint(owner, token);
 
-        emitter.emitNodeCreated(
-            label,
-            node,
-            registryNameNode(),
-            expiry,
-            resolver
-        );
+        emitter.emitNodeCreated(label, node, registryNameNode(), expiry);
 
         return node;
     }
 
-    function _mintNameToken(
-        bytes32 node,
-        address owner,
-        address resolver
-    ) internal {
+    function _mintNameToken(bytes32 node, address owner) internal {
         uint256 tokenId = uint256(node);
         _mint(owner, tokenId);
-
-        resolvers[node] = resolver;
         expiries[node] = type(uint256).max;
     }
 
@@ -245,9 +224,9 @@ contract EnsNameRegistry is ERC721, Controllable {
     }
 
     function _isValidExpiry(uint256 expiration) internal view {
-        if (_isExpirable() && expiration < block.timestamp) {
-            revert InvalidExpiry(
-                expiration,
+        if (_isExpirable()) {
+            require(
+                expiration > block.timestamp,
                 "Expiry should be greather than block.timestamp"
             );
         }

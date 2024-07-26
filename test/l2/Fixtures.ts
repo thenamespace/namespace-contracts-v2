@@ -35,6 +35,7 @@ export async function controllerFullFlowFixture() {
     BASE_URI,
     nodeResolver.address,
     emitter.address,
+    resolver.address
   ]);
 
   const pc = await hre.viem.getPublicClient();
@@ -53,7 +54,6 @@ export async function controllerFullFlowFixture() {
     parentControl: 0,
     label: ENS_NAME.split(".")[0],
     TLD: ENS_NAME.split(".")[1],
-    resolver: zeroAddress,
     tokenSymbol: "NS",
   };
 
@@ -83,7 +83,6 @@ export async function controllerFullFlowFixture() {
     parentNode: namehash(`${factoryContext.label}.${factoryContext.TLD}`),
     paymentReceiver: owner.account.address,
     price: mintPrice,
-    resolver: zeroAddress,
   };
 
   const mintSignature = await generateMintContextSignature(
