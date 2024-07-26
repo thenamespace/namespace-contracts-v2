@@ -13,6 +13,7 @@ abstract contract RegistryMinter {
     event NameMinted(
         string label,
         bytes32 parentNode,
+        bytes32 node,
         address owner,
         address resolver,
         uint256 price,
@@ -35,10 +36,11 @@ abstract contract RegistryMinter {
             revert RegistryNotFound(context.parentNode);
         }
 
+        bytes32 node;
         if (resolverData.length > 0) {
-            _mintWithData(context, registryAddress, resolverData);
+            node = _mintWithData(context, registryAddress, resolverData);
         } else {
-            _mintSimple(context, registryAddress);
+            node = _mintSimple(context, registryAddress);
         }
 
         _transferFees(context);
@@ -46,6 +48,7 @@ abstract contract RegistryMinter {
         emit NameMinted(
             context.label,
             context.parentNode,
+            node,
             context.owner,
             context.resolver,
             context.price,
@@ -59,7 +62,7 @@ abstract contract RegistryMinter {
     function _mintSimple(
         MintContext memory context,
         address registryAddress
-    ) internal {
+    ) internal returns (bytes32) {
         bytes32 node = IEnsNameRegistry(registryAddress).register(
             context.label,
             context.owner,
@@ -67,13 +70,14 @@ abstract contract RegistryMinter {
             context.expiry
         );
         getRegistryResolver().setNodeRegistry(node, registryAddress);
+        return node;
     }
 
     function _mintWithData(
         MintContext memory context,
         address registryAddress,
         bytes[] memory resolverData
-    ) internal {
+    ) internal returns (bytes32) {
         bytes32 node = IEnsNameRegistry(registryAddress).register(
             context.label,
             address(this),
@@ -90,6 +94,7 @@ abstract contract RegistryMinter {
             context.owner,
             tokenId
         );
+        return node;
     }
 
     function _transferFees(MintContext memory context) internal {
