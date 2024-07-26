@@ -150,8 +150,14 @@ describe("NameRegistrarController", () => {
 
   describe("Factory", () => {
     it("Should properly deploy ENS name registry", async () => {
-      const { controller, verifier, chainId, publicClient, nodeResolver, owner } =
-        await loadFixture(controllerFullFlowFixture);
+      const {
+        controller,
+        verifier,
+        chainId,
+        publicClient,
+        nodeResolver,
+        owner,
+      } = await loadFixture(controllerFullFlowFixture);
 
       const tokenDeployment: FactoryContext = {
         expirableType: 0,
@@ -237,10 +243,8 @@ describe("NameRegistrarController", () => {
       const tx = await controller.write.deploy([tokenDeployment, signature]);
       await publicClient.waitForTransactionReceipt({ hash: tx });
 
-      const oneYearExpiry = (await time.latest()) + ONE_YEAR_EXPIRY_SECONDS;
-
       const mintContext: MintContext = {
-        expiry: BigInt(oneYearExpiry),
+        expiry: BigInt(ONE_YEAR_EXPIRY_SECONDS),
         fee: BigInt(0),
         price: BigInt(0),
         label: "testing",
@@ -303,7 +307,9 @@ describe("NameRegistrarController", () => {
 
       await publicClient.waitForTransactionReceipt({ hash: tx02 });
 
-      const registrarAddress = await nodeResolver.read.nodeRegistries([subnameNode]);
+      const registrarAddress = await nodeResolver.read.nodeRegistries([
+        subnameNode,
+      ]);
       const expirableRegistrar = await hre.viem.getContractAt(
         "EnsNameRegistry",
         registrarAddress
@@ -359,15 +365,14 @@ describe("NameRegistrarController", () => {
         registrarAddress
       );
 
-      const expiryOneYear = (await time.latest()) + ONE_YEAR_EXPIRY_SECONDS;
       const mintContext: MintContext = {
-        expiry: BigInt(expiryOneYear),
+        expiry: BigInt(ONE_YEAR_EXPIRY_SECONDS),
         fee: BigInt(0),
         label: "testing",
         owner: owner.account.address,
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
-        price: BigInt(0)
+        price: BigInt(0),
       };
 
       const mintSignature = await generateMintContextSignature(
@@ -390,13 +395,11 @@ describe("NameRegistrarController", () => {
       const node = namehash(subname);
 
       const expiry = await registry.read.expiries([node]);
-
-      expect(expiry).to.equal(BigInt(expiryOneYear));
-
-      const extendedExpiry = expiry + BigInt(ONE_YEAR_EXPIRY_SECONDS);
+      const expectedExpiry = (await time.latest()) + ONE_YEAR_EXPIRY_SECONDS;
+      expect(expiry).to.equal(BigInt(expectedExpiry));
 
       const extendExpiryContext: ExtendExpiryContext = {
-        expiry: extendedExpiry,
+        expiry: BigInt(ONE_YEAR_EXPIRY_SECONDS),
         fee: BigInt(0),
         node: node,
         price: BigInt(0),
@@ -419,7 +422,9 @@ describe("NameRegistrarController", () => {
 
       const extendedExpiryResult = await registry.read.expiries([node]);
 
-      expect(extendedExpiryResult).to.be.equal(extendedExpiry);
+      expect(parseInt(extendedExpiryResult.toString())).to.be.greaterThan(
+        parseInt(expiry.toString())
+      );
     });
   });
 

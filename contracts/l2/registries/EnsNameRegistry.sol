@@ -94,15 +94,12 @@ contract EnsNameRegistry is ERC721, Controllable {
      * @param expiry New expiry timestamp.
      */
     function setExpiry(bytes32 node, uint256 expiry) external onlyController {
-        _isValidExpiry(expiry);
-
         uint256 tokenId = uint256(node);
         if (ownerOf(tokenId) == address(0)) {
             revert NodeNotFound(node);
         }
 
-        expiries[node] = expiry;
-        emitter.emitExpirySet(node, expiry);
+        _setExpiry(node, expiry);
     }
 
     /**
@@ -177,8 +174,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         address owner,
         uint256 expiry
     ) internal returns (bytes32) {
-        _isValidExpiry(expiry);
-
         uint256 token = uint256(node);
 
         if (_ownershipWithExpiry(token) != address(0)) {
@@ -190,15 +185,20 @@ contract EnsNameRegistry is ERC721, Controllable {
             _burn(token);
         }
 
-        if (_isExpirable()) {
-            expiries[node] = expiry;
-        }
-
         _mint(owner, token);
+
+        if (_isExpirable()) {
+            _setExpiry(node, expiry);
+        }
 
         emitter.emitNodeCreated(label, node, registryNameNode(), expiry);
 
         return node;
+    }
+
+    function _setExpiry(bytes32 node, uint256 expiry) internal {
+        expiries[node] = block.timestamp + expiry;
+        emitter.emitExpirySet(node, expiries[node]);
     }
 
     function _mintNameToken(bytes32 node, address owner) internal {
@@ -221,15 +221,6 @@ contract EnsNameRegistry is ERC721, Controllable {
 
     function _isControllable() internal view returns (bool) {
         return config.parentControlType == ParentControlType.Controllable;
-    }
-
-    function _isValidExpiry(uint256 expiration) internal view {
-        if (_isExpirable()) {
-            require(
-                expiration > block.timestamp,
-                "Expiry should be greather than block.timestamp"
-            );
-        }
     }
 
     function _baseURI() internal view override returns (string memory) {

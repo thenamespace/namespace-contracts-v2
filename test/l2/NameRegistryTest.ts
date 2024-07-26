@@ -143,7 +143,6 @@ describe("EnsNameRegistry", () => {
   describe("EnsRegistrar with expiry and controllable", () => {
     it("Should be able to mint subname, mint again after expiry", async () => {
       const subnameLabel = "test-label";
-      const oneYearExpiry = (await time.latest()) + ONE_YEAR_EXPIRY_SECONDS;
 
       const [,,wallet] = await hre.viem.getWalletClients();
 
@@ -154,7 +153,7 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenOwner.account.address,
-          BigInt(oneYearExpiry),
+          BigInt(ONE_YEAR_EXPIRY_SECONDS),
         ],
         {
           account: tokenDelegate.account,
@@ -178,7 +177,7 @@ describe("EnsNameRegistry", () => {
           [
             subnameLabel + "123",
             tokenOwner.account.address,
-            BigInt(oneYearExpiry),
+            BigInt(ONE_YEAR_EXPIRY_SECONDS),
           ],
           {
             account: wallet.account,
@@ -192,7 +191,7 @@ describe("EnsNameRegistry", () => {
           [
             subnameLabel,
             tokenOwner.account.address,
-            BigInt(oneYearExpiry),
+            BigInt(ONE_YEAR_EXPIRY_SECONDS),
           ],
           {
             account: tokenDelegate.account,
@@ -213,7 +212,7 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenDelegate.account.address,
-          BigInt(oneYearExpiry + ONE_YEAR_EXPIRY_SECONDS),
+          BigInt(ONE_YEAR_EXPIRY_SECONDS + ONE_YEAR_EXPIRY_SECONDS),
         ],
         {
           account: tokenDelegate.account,
@@ -271,7 +270,6 @@ describe("EnsNameRegistry", () => {
 
     it("Should return zeroAddress owner for expired name", async () => {
       const subnameLabel = "test-label";
-      const oneYearExpiry = (await time.latest()) + ONE_YEAR_EXPIRY_SECONDS;
 
       const { registry, tokenOwner, tokenDelegate, publicClient } =
         await loadFixture(deployRegistrarExpirableAndControllable);
@@ -281,7 +279,7 @@ describe("EnsNameRegistry", () => {
         [
           subnameLabel,
           tokenOwner.account.address,
-          BigInt(oneYearExpiry),
+          BigInt(ONE_YEAR_EXPIRY_SECONDS),
         ],
         {
           account: tokenDelegate.account,
