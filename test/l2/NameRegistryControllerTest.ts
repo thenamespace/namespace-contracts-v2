@@ -21,6 +21,7 @@ import {
   generateFactoryContextSignature,
   generateMintContextSignature,
   MintContext,
+  randomNonce,
 } from "./SignaturesHelper";
 import hre from "hardhat";
 
@@ -83,6 +84,7 @@ describe("NameRegistrarController", () => {
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
         price: BigInt(0),
+        nonce: randomNonce()
       };
 
       const fullSubname = `${mintContext.label}.${registrarName}`;
@@ -203,7 +205,7 @@ describe("NameRegistrarController", () => {
       ]);
 
       expect(expectedRegistrarAddress.toLocaleLowerCase()).to.equal(
-        RegistryDeployedEvent.args.registrarAddress?.toLocaleLowerCase(),
+        RegistryDeployedEvent.args.registryAddress?.toLocaleLowerCase(),
         "Expected the registry address matches the address from nodeResolver"
       );
     });
@@ -251,6 +253,7 @@ describe("NameRegistrarController", () => {
         owner: owner.account.address,
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
+        nonce: randomNonce()
       };
 
       const subnameNode = namehash(`testing.expirable.xyz`);
@@ -268,7 +271,7 @@ describe("NameRegistrarController", () => {
         "0x",
       ]);
       await publicClient.waitForTransactionReceipt({ hash: tx01 });
-
+      mintContext.nonce = randomNonce();
       const mintSignatureV2 = await generateMintContextSignature(
         mintContext,
         verifier,
@@ -373,6 +376,7 @@ describe("NameRegistrarController", () => {
         parentNode: namehash(registrarName),
         paymentReceiver: owner.account.address,
         price: BigInt(0),
+        nonce: randomNonce()
       };
 
       const mintSignature = await generateMintContextSignature(
@@ -404,6 +408,7 @@ describe("NameRegistrarController", () => {
         node: node,
         price: BigInt(0),
         paymentReceiver: owner.account.address,
+        nonce: randomNonce()
       };
 
       const expirySignature = await generateExtendExpiryContextSignature(
@@ -441,6 +446,7 @@ describe("NameRegistrarController", () => {
         parentNode: NAME_NODE,
         paymentReceiver: owner.account.address,
         price: BigInt(10000000),
+        nonce: randomNonce()
       };
 
       const mintSig = await generateMintContextSignature(
@@ -507,6 +513,7 @@ describe("NameRegistrarController", () => {
         parentNode: NAME_NODE,
         paymentReceiver: owner.account.address,
         price: price,
+        nonce: randomNonce()
       };
       const mintSig = await generateMintContextSignature(
         mintContext,

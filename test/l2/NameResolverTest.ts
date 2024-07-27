@@ -1,6 +1,6 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { controllerFullFlowFixture } from "./Fixtures";
-import { generateMintContextSignature, MintContext } from "./SignaturesHelper";
+import { generateMintContextSignature, MintContext, randomNonce } from "./SignaturesHelper";
 import { namehash, toHex } from "viem";
 import { expect } from "chai";
 
@@ -20,7 +20,7 @@ describe("NamePublicResolver", () => {
       parentNode: parentNode,
       paymentReceiver: owner.account.address,
       price: BigInt(0),
-      resolver: resolver.address,
+      nonce: randomNonce()
     };
 
     const signature = await generateMintContextSignature(

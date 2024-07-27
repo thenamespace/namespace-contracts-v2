@@ -1,10 +1,11 @@
 import hre from "hardhat";
-import { Hash, namehash, parseEther, toHex, zeroAddress } from "viem";
+import { Hash, namehash, parseEther, toHex } from "viem";
 import {
   FactoryContext,
   generateFactoryContextSignature,
   generateMintContextSignature,
   MintContext,
+  randomNonce,
 } from "./SignaturesHelper";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -70,7 +71,7 @@ export async function controllerFullFlowFixture() {
   await pc.waitForTransactionReceipt({ hash: tx02 });
 
   const deployEvent = await controller.getEvents.RegistryDeployed();
-  const registrarAddress = deployEvent[0].args.registrarAddress;
+  const registrarAddress = deployEvent[0].args.registryAddress;
 
   const mintFee = BigInt(parseEther("0.1", "wei"));
   const mintPrice = BigInt(parseEther("1", "wei"));
@@ -83,6 +84,7 @@ export async function controllerFullFlowFixture() {
     parentNode: namehash(`${factoryContext.label}.${factoryContext.TLD}`),
     paymentReceiver: owner.account.address,
     price: mintPrice,
+    nonce: randomNonce()
   };
 
   const mintSignature = await generateMintContextSignature(

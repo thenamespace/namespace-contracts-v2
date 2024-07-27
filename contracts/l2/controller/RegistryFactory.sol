@@ -15,8 +15,8 @@ abstract contract RegistryFactory {
     event RegistryDeployed(
         string label,
         string TLD,
-        bytes32 node,
-        address registrarAddress,
+        bytes32 indexed node,
+        address registryAddress,
         string tokenName,
         string tokenSymbol,
         address owner,

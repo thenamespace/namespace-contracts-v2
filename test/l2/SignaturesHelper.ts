@@ -9,6 +9,7 @@ const MintContextTypes = {
     { name: "fee", type: "uint256" },
     { name: "paymentReceiver", type: "address" },
     { name: "expiry", type: "uint256" },
+    { name: "nonce", type: "uint256" },
   ],
 };
 
@@ -31,10 +32,9 @@ const ExtendExpiryTypes = {
     { name: "price", type: "uint256" },
     { name: "fee", type: "uint256" },
     { name: "paymentReceiver", type: "address" },
+    { name: "nonce", type: "uint256" },
   ],
 };
-
-// ExtendExpiryContext(bytes32 node,uint256 expiry,uint256 price,uint256 fee,address paymentReceiver
 
 export interface MintContext {
   owner: Address;
@@ -44,6 +44,7 @@ export interface MintContext {
   fee: bigint;
   paymentReceiver: Address;
   expiry: bigint;
+  nonce: bigint
 }
 
 export interface FactoryContext {
@@ -62,6 +63,7 @@ export interface ExtendExpiryContext {
   price: bigint;
   fee: bigint;
   paymentReceiver: Address;
+  nonce: bigint
 }
 
 export const generateMintContextSignature = async (
@@ -85,6 +87,7 @@ export const generateMintContextSignature = async (
     fee: context.fee,
     paymentReceiver: context.paymentReceiver,
     expiry: context.expiry,
+    nonce: context.nonce
   };
 
   //@ts-ignore
@@ -115,6 +118,7 @@ export const generateExtendExpiryContextSignature = async (
     price: context.price,
     fee: context.fee,
     paymentReceiver: context.paymentReceiver,
+    nonce: context.nonce
   };
 
   //@ts-ignore
@@ -157,3 +161,9 @@ export const generateFactoryContextSignature = async (
     primaryType: "FactoryContext",
   });
 };
+
+
+export const randomNonce = () => {
+  const randomNumber = Math.floor(Math.random() * 10000000000000);
+  return BigInt(randomNumber);
+}

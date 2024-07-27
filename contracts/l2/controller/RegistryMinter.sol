@@ -10,6 +10,7 @@ error RegistryNotFound(bytes32);
 error InsufficientBalance(uint256, uint256);
 
 abstract contract RegistryMinter {
+
     event NameMinted(
         string label,
         bytes32 parentNode,
