@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Controllable} from "../../controllers/Controllable.sol";
 import {INodeRegistryResolver} from "./INodeRegistryResolver.sol";
+import {IEnsNameRegistry} from "../registries/IEnsNameRegistry.sol";
 
 /**
  * @title NodeRegistryResolver
@@ -11,8 +12,6 @@ import {INodeRegistryResolver} from "./INodeRegistryResolver.sol";
  */
 contract NodeRegistryResolver is INodeRegistryResolver, Controllable {
     mapping(bytes32 => address) public nodeRegistries;
-    mapping(uint256 => address) public versionedControllers;
-    uint256 version = 1;
 
     event NodeSet(bytes32 node, address registrar);
 
@@ -30,5 +29,23 @@ contract NodeRegistryResolver is INodeRegistryResolver, Controllable {
             nodeRegistries[node] = registrar;
             emit NodeSet(node, registrar);
         }
+    }
+
+    /**
+     * @dev Sets the registry address for a given node.
+     * @param node The subname node namehash -> namehash("subname.name.eth").
+     * @param parentNode Nodehash of a parent registry node -> namehash("name.eth").
+     * @return address Returns address of subnode owner, zero address is node is not owned
+     * reverts if the registry is not present for parentNode
+     */
+    function subnodeOwner(
+        bytes32 node,
+        bytes32 parentNode
+    ) external view returns (address) {
+        address registryAddress = nodeRegistries[parentNode];
+
+        require(registryAddress != address(0), "Registry not found");
+
+        return IEnsNameRegistry(registryAddress).ownerOf(uint256(node));
     }
 }
