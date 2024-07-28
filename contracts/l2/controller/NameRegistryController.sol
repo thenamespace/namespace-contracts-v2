@@ -92,18 +92,6 @@ contract NameRegistryController is
         _extendExpiry(context);
     }
 
-    function owner(bytes32 node) public view returns (address) {
-        return
-            IEnsNameRegistry(_getRegistryForNode(node)).ownerOf(uint256(node));
-    }
-
-    function _getRegistryForNode(bytes32 node) internal view returns (address) {
-        address registryAddress = getRegistryResolver().nodeRegistries(node);
-
-        require(registryAddress != address(0), "Registry not found");
-        return registryAddress;
-    }
-
     function setVerifier(address _verifier) external onlyOwner {
         _setVerifier(_verifier);
     }
