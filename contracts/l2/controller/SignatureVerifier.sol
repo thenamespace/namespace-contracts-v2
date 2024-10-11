@@ -6,10 +6,11 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../Types.sol";
 
 error InvalidSignature(address);
+error SignatureExpired();
+error NotVerifiedMinter();
 
 contract SignatureVerifier is EIP712 {
     event VerifierSet(address);
-    mapping(uint256 => bool) nonces;
     address verifier;
     constructor(address _verifier) EIP712("namespace", "1") {
         verifier = _verifier;
@@ -20,6 +21,7 @@ contract SignatureVerifier is EIP712 {
         FactoryContext memory context,
         bytes memory signature
     ) internal view {
+        _verifySignatureExpiry(context.signatureExpiry);
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
@@ -30,7 +32,8 @@ contract SignatureVerifier is EIP712 {
                     keccak256(abi.encodePacked(context.TLD)),
                     context.owner,
                     context.parentControl,
-                    context.expirableType
+                    context.expirableType,
+                    context.signatureExpiry
                 )
             )
         );
@@ -40,8 +43,13 @@ contract SignatureVerifier is EIP712 {
     function verifyMintContextSignature(
         MintContext memory context,
         bytes memory signature
-    ) internal {
-        _verifyNonce(context.nonce);
+    ) internal view {
+        _verifySignatureExpiry(context.signatureExpiry);
+
+        if (context.verifiedMinter != msg.sender) {
+            revert NotVerifiedMinter();
+        }
+
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
@@ -53,19 +61,19 @@ contract SignatureVerifier is EIP712 {
                     context.fee,
                     context.paymentReceiver,
                     context.expiry,
-                    context.nonce
+                    context.signatureExpiry,
+                    context.verifiedMinter
                 )
             )
         );
         _verifySignature(digest, signature);
-        _consumeNonce(context.nonce);
     }
 
     function verifyExtendExpiryContextSignature(
         ExtendExpiryContext memory context,
         bytes memory signature
-    ) internal {
-        _verifyNonce(context.nonce);
+    ) internal view {
+        _verifySignatureExpiry(context.signatureExpiry);
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
@@ -75,20 +83,11 @@ contract SignatureVerifier is EIP712 {
                     context.price,
                     context.fee,
                     context.paymentReceiver,
-                    context.nonce
+                    context.signatureExpiry
                 )
             )
         );
         _verifySignature(digest, signature);
-        _consumeNonce(context.nonce);
-    }
-
-    function _verifyNonce(uint256 nonce) internal view {
-        require(!nonces[nonce], "Nonce already consumed");
-    }
-
-    function _consumeNonce(uint256 nonce) internal {
-        nonces[nonce] = true;
     }
 
     function _verifySignature(
@@ -98,6 +97,12 @@ contract SignatureVerifier is EIP712 {
         address exctractedSigner = ECDSA.recover(digest, signature);
         if (exctractedSigner != verifier) {
             revert InvalidSignature(exctractedSigner);
+        }
+    }
+
+    function _verifySignatureExpiry(uint256 signatureExpiry) internal view {
+        if (signatureExpiry <= block.timestamp) {
+            revert SignatureExpired();
         }
     }
 

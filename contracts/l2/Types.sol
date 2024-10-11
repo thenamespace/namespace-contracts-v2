@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 bytes32 constant MINT_CONTEXT = keccak256(
-    "MintContext(string label,bytes32 parentNode,address owner,uint256 price,uint256 fee,address paymentReceiver,uint256 expiry,uint256 nonce)"
+    "MintContext(string label,bytes32 parentNode,address owner,uint256 price,uint256 fee,address paymentReceiver,uint256 expiry,uint256 signatureExpiry,address verifiedMinter)"
 );
 
 struct MintContext {
@@ -13,11 +13,12 @@ struct MintContext {
     uint256 fee;
     address paymentReceiver;
     uint256 expiry;
-    uint256 nonce;
+    uint256 signatureExpiry;
+    address verifiedMinter;
 }
 
 bytes32 constant FACTORY_CONTEXT = keccak256(
-    "FactoryContext(string tokenName,string tokenSymbol,string label,string TLD,address owner,uint8 parentControl,uint8 expirableType)"
+    "FactoryContext(string tokenName,string tokenSymbol,string label,string TLD,address owner,uint8 parentControl,uint8 expirableType,uint256 signatureExpiry)"
 );
 
 struct FactoryContext {
@@ -28,6 +29,7 @@ struct FactoryContext {
     string label;
     string TLD;
     address owner;
+    uint256 signatureExpiry;
 }
 
 struct ExtendExpiryContext {
@@ -36,11 +38,11 @@ struct ExtendExpiryContext {
     uint256 price;
     uint256 fee;
     address paymentReceiver;
-    uint256 nonce;
+    uint256 signatureExpiry;
 }
 
 bytes32 constant EXTEND_EXPIRY_CONTEXT = keccak256(
-    "ExtendExpiryContext(bytes32 node,uint256 expiry,uint256 price,uint256 fee,address paymentReceiver,uint256 nonce)"
+    "ExtendExpiryContext(bytes32 node,uint256 expiry,uint256 price,uint256 fee,address paymentReceiver,uint256 nonce,uint256 signatureExpiry)"
 );
 
 enum ExpirableType {

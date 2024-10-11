@@ -47,10 +47,10 @@ abstract contract RegistryExpiryExtender is ReentrancyGuard {
 
         uint256 remainder = msg.value - totalPrice;
         if (remainder > 0) {
-            (bool sentToTreasury, ) = payable(msg.sender).call{
+            (bool remainderSent, ) = payable(msg.sender).call{
                 value: remainder
             }("");
-            require(sentToTreasury, "Could not transfer ETH to msg.sender");
+            require(remainderSent, "Could not transfer ETH to msg.sender");
         }
     }
 
