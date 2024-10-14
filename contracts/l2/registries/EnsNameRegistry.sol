@@ -101,7 +101,10 @@ contract EnsNameRegistry is ERC721, Controllable {
     function setExpiry(bytes32 node, uint256 expiry) external onlyController {
         uint256 tokenId = uint256(node);
 
-        require(node != registryNameNode(), "Registry name node is not expirable");
+        require(
+            node != registryNameNode(),
+            "Registry name node is not expirable"
+        );
 
         if (ownerOf(tokenId) == address(0)) {
             revert NodeNotFound(node);
@@ -116,8 +119,6 @@ contract EnsNameRegistry is ERC721, Controllable {
      * @param node Hash representation of the ENS name.
      */
     function burn(bytes32 node) public registryTokenOwner {
-
-
         if (_isControllable() && node != registryNameNode()) {
             _burn(uint256(node));
             delete expiries[node];
@@ -136,6 +137,20 @@ contract EnsNameRegistry is ERC721, Controllable {
         if (_isControllable()) {
             config.parentControlType = ParentControlType.NonControllable;
         }
+    }
+
+    function reclaimRegistryToken(
+        address newRegistryOwner
+    ) public onlyController returns (bool) {
+        uint256 registryTokenId = uint256(registryNameNode());
+        address existingOwner = ownerOf(registryTokenId);
+        bool reclaimed = false;
+        if (existingOwner != newRegistryOwner) {
+            _burn(registryTokenId);
+            _mint(newRegistryOwner, registryTokenId);
+            reclaimed = true;
+        }
+        return reclaimed;
     }
 
     function setBaseUri(string memory _baseUri) external onlyOwner {

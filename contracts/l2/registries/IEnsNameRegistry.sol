@@ -42,4 +42,5 @@ interface IEnsNameRegistry {
     function setExpiry(bytes32 node, uint256 expiration) external;
     function registryNameNode() external view returns (bytes32);
     function burn(bytes32 node) external;
+    function reclaimRegistryToken(address newRegistryOwner) external returns(bool);
 }

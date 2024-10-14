@@ -24,13 +24,28 @@ abstract contract RegistryFactory {
         ExpirableType expirableType
     );
 
+    event RegistryReclaimed(
+        bytes32 indexed node,
+        address registryAddress,
+        address newOwner
+    );
+
     function _deploy(FactoryContext memory context) internal {
         bytes32 tdlHash = EnsUtils.namehash(bytes32(0), context.TLD);
         bytes32 nameNode = EnsUtils.namehash(tdlHash, context.label);
         INodeRegistryResolver registryResolver = getRegistryResolver();
 
-        if (registryResolver.nodeRegistries(nameNode) != address(0)) {
-            revert RegistryAlreadyExists(nameNode);
+        address registryAddress = registryResolver.nodeRegistries(nameNode);
+        if (registryAddress != address(0)) {
+            IEnsNameRegistry existingRegistry = IEnsNameRegistry(registryAddress);
+            if (existingRegistry.reclaimRegistryToken(context.owner)) {
+                emit RegistryReclaimed(
+                    nameNode,
+                    registryAddress,
+                    context.owner
+                );
+            }
+            return;
         }
 
         RegistryConfig memory config = RegistryConfig(
@@ -57,7 +72,7 @@ abstract contract RegistryFactory {
             context.label,
             context.TLD,
             nameNode,
-            address(address(registry)),
+            address(registry),
             context.tokenName,
             context.tokenSymbol,
             context.owner,
@@ -65,16 +80,15 @@ abstract contract RegistryFactory {
             context.expirableType
         );
     }
-
-    function getRegistryResolver() internal view virtual returns (INodeRegistryResolver);
-
-    function getEmitter() internal view virtual returns (IRegistryEmitter);
-
-    function getRegistryURI()
+    function getRegistryResolver()
         internal
         view
         virtual
-        returns (string memory);
+        returns (INodeRegistryResolver);
 
-    function _owner() internal view virtual returns(address);
+    function getEmitter() internal view virtual returns (IRegistryEmitter);
+
+    function getRegistryURI() internal view virtual returns (string memory);
+
+    function _owner() internal view virtual returns (address);
 }
