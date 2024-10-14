@@ -26,6 +26,11 @@ contract EnsNameRegistry is ERC721, Controllable {
         _;
     }
 
+    modifier isNotExpired(uint256 tokenId) {
+        require(!_isExpired(bytes32(tokenId)), "Node is expired");
+        _;
+    }
+
     constructor(
         RegistryConfig memory _config
     ) ERC721(_config.tokenName, _config.tokenSymbol) {
@@ -149,7 +154,7 @@ contract EnsNameRegistry is ERC721, Controllable {
         address from,
         address to,
         uint256 tokenId
-    ) public override {
+    ) public override isNotExpired(tokenId) {
         super.transferFrom(from, to, tokenId);
 
         if (from != address(0)) {
@@ -160,6 +165,13 @@ contract EnsNameRegistry is ERC721, Controllable {
                 to
             );
         }
+    }
+
+    function approve(
+        address to,
+        uint256 tokenId
+    ) public override isNotExpired(tokenId) {
+        super.approve(to, tokenId);
     }
 
     function _ownershipWithExpiry(
