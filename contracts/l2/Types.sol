@@ -42,7 +42,7 @@ struct ExtendExpiryContext {
 }
 
 bytes32 constant EXTEND_EXPIRY_CONTEXT = keccak256(
-    "ExtendExpiryContext(bytes32 node,uint256 expiry,uint256 price,uint256 fee,address paymentReceiver,uint256 nonce,uint256 signatureExpiry)"
+    "ExtendExpiryContext(bytes32 node,uint256 expiry,uint256 price,uint256 fee,address paymentReceiver,uint256 signatureExpiry)"
 );
 
 enum ExpirableType {
