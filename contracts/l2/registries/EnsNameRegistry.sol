@@ -202,7 +202,11 @@ contract EnsNameRegistry is ERC721, Controllable {
     }
 
     function _setExpiry(bytes32 node, uint256 expiry) internal {
-        expiries[node] = block.timestamp + expiry;
+        if (_isExpired(node) || expiries[node] == 0) {
+            expiries[node] = block.timestamp + expiry;
+        } else {
+            expiries[node] += expiry;
+        }
         emitter.emitExpirySet(node, expiries[node]);
     }
 
