@@ -125,7 +125,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         if (_isControllable() && node != registryNameNode()) {
             _burn(uint256(node));
             delete expiries[node];
-
             emitter.emitNodeBurned(node, registryNameNode(), _msgSender());
         } else {
             revert NodeNotControllable();
@@ -190,12 +189,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         return super.tokenURI(tokenId);
     }
     
-    function balanceOf(address owner) public view override returns(uint256) {
-        if (!_isExpirable()) {
-            return super.balanceOf(owner);
-        }
-        return _balanceOfExpirable(owner);
-    }
 
     function _ownershipWithExpiry(
         uint256 tokenId
@@ -206,6 +199,13 @@ contract EnsNameRegistry is ERC721, Controllable {
         }
 
         return _ownerOf(tokenId);
+    }
+
+    function balanceOf(address owner) public view override returns (uint256) {
+        if (!_isExpirable()) {
+            return super.balanceOf(owner);
+        }
+        return _balanceOfExpirable(owner);
     }
 
     function _register(
@@ -226,11 +226,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         }
 
         _mint(owner, token);
-
-        if (_isExpirable()) {
-            _setExpiry(node, expiry);
-        }
-
         emitter.emitNodeCreated(label, node, registryNameNode(), expiry);
 
         return node;
