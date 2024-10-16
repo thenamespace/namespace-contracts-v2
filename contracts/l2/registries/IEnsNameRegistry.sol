@@ -8,6 +8,10 @@ error NodeTaken(bytes32, string);
 error NodeNotControllable();
 error NodeNotFound(bytes32);
 
+uint8 constant TOKEN_NOT_SET = 0;
+uint8 constant TOKEN_VALID = 1;
+uint8 constant TOKEN_INVALID = 2;
+
 struct RegistryConfig {
     ParentControlType parentControlType;
     ExpirableType expirableType;
