@@ -18,6 +18,9 @@ contract EnsNameRegistry is ERC721, Controllable {
     RegistryConfig public config;
     IRegistryEmitter emitter;
 
+    mapping(address => uint256[]) _ownedTokens;
+    mapping(address => mapping(uint256 token => uint8)) _ownedTokenStatus;
+
     modifier registryTokenOwner() {
         require(
             ownerOf(uint256(registryNameNode())) == _msgSender(),
@@ -186,6 +189,13 @@ contract EnsNameRegistry is ERC721, Controllable {
     ) public view override isNotExpired(tokenId) returns (string memory) {
         return super.tokenURI(tokenId);
     }
+    
+    function balanceOf(address owner) public view override returns(uint256) {
+        if (!_isExpirable()) {
+            return super.balanceOf(owner);
+        }
+        return _balanceOfExpirable(owner);
+    }
 
     function _ownershipWithExpiry(
         uint256 tokenId
@@ -259,5 +269,63 @@ contract EnsNameRegistry is ERC721, Controllable {
 
     function _baseURI() internal view override returns (string memory) {
         return config.metadataUri;
+    }
+
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal override returns (address) {
+        address previousOwner = super._update(to, tokenId, auth);
+
+        if (_isExpirable()) {
+            // case - token has been minted
+            if (previousOwner == address(0)) {
+                _addOwnedToken(to, tokenId);
+            }
+
+            // case - token has been burned
+            if (to == address(0)) {
+                _removeOwnedToken(previousOwner, tokenId);
+            }
+
+            // case - token has been transfered
+            if (
+                to != address(0) &&
+                previousOwner != address(0) &&
+                to != previousOwner
+            ) {
+                _addOwnedToken(to, tokenId);
+                _removeOwnedToken(previousOwner, tokenId);
+            }
+        }
+
+        return previousOwner;
+    }
+
+    function _addOwnedToken(address owner, uint256 tokenId) internal {
+        if (_ownedTokenStatus[owner][tokenId] == TOKEN_NOT_SET) {
+            _ownedTokens[owner].push(tokenId);
+        }
+        _ownedTokenStatus[owner][tokenId] = TOKEN_VALID;
+    }
+
+    function _removeOwnedToken(address owner, uint256 tokenId) internal {
+        _ownedTokenStatus[owner][tokenId] = TOKEN_INVALID;
+    }
+
+    function _balanceOfExpirable(address owner) internal view returns (uint256) {
+        uint256 balance = 0;
+        uint256 ownedTokensLen = _ownedTokens[owner].length;
+        for (uint i = 0; i < ownedTokensLen; i++) {
+            uint256 currentTokenId = _ownedTokens[owner][i];
+            if (
+                _ownedTokenStatus[owner][currentTokenId] == TOKEN_VALID &&
+                !_isExpired(bytes32(currentTokenId))
+            ) {
+                balance++;
+            }
+        }
+        return balance;
     }
 }
