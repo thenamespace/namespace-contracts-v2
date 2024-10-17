@@ -6,42 +6,29 @@ import {RegistryControllerProxy} from "../controller/RegistryControllerProxy.sol
 import {TokenMetadata} from "../registries/TokenMetadata.sol";
 
 contract NamespaceL2DeployerV2 {
-    address public proxy;
     address public controller;
-    address public tokenMetadata;
 
     constructor(
         address _verifier,
         address _treasury,
-        string memory _baseUri,
         address _registryResolver,
         address _emitter,
         address _resolver,
-        address _owner
+        address _owner,
+        address _proxyAddress,
+        address _tokenMetadata
     ) {
-        RegistryControllerProxy _proxy = new RegistryControllerProxy();
-        address proxyAddress = address(_proxy);
-        proxy = proxyAddress;
-
-        TokenMetadata _tokenMetadata = new TokenMetadata(_baseUri);
-        tokenMetadata = address(_tokenMetadata);
-
-        _tokenMetadata.transferOwnership(_owner);
 
         NameRegistryController _controller = new NameRegistryController(
             _verifier,
             _treasury,
-            address(tokenMetadata),
+            _tokenMetadata,
             _registryResolver,
             _emitter,
             _resolver,
-            proxyAddress
+           _proxyAddress
         );
-        address controllerAddress = address(_controller);
-        controller = controllerAddress;
-        _proxy.setController(controllerAddress, true);
-        _proxy.transferOwnership(_owner);
-
+    
         _controller.transferOwnership(_owner);
 
         // emitter -> setController(controller,true);

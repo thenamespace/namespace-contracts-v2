@@ -237,7 +237,12 @@ contract EnsNameRegistry is ERC721, Controllable {
         }
 
         _mint(owner, token);
-        emitter.emitNodeCreated(label, node, registryNameNode(), expiry);
+
+        if (_isExpirable()) {
+            _setExpiry(node, expiry);
+        }
+
+        emitter.emitNodeCreated(label, node, registryNameNode(), expiries[node]);
 
         return node;
     }

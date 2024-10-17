@@ -45,7 +45,6 @@ abstract contract RegistryFactory is ControllerBase {
         }
 
         address registryAddress = address(registry);
-        emitter.setApprovedEmitter(registryAddress, true);
 
         registry.setController(address(controllerProxy), true);
         registry.transferOwnership(owner());
@@ -80,7 +79,8 @@ abstract contract RegistryFactory is ControllerBase {
         );
         EnsNameRegistry registry = new EnsNameRegistry(config);
         registryResolver.setNodeRegistry(nameNode, address(registry));
-
+        emitter.setApprovedEmitter(address(registry), true);
+        
         super.setResolverData(resolverData);
 
         registry.transferFrom(address(this), context.owner, uint256(nameNode));
@@ -103,6 +103,13 @@ abstract contract RegistryFactory is ControllerBase {
         );
         EnsNameRegistry registry = new EnsNameRegistry(config);
         registryResolver.setNodeRegistry(nameNode, address(registry));
+        emitter.setApprovedEmitter(address(registry), true);
+
         return registry;
+    }
+
+    function _setPermissions(bytes32 nameNode, address registryAddress) internal {
+        registryResolver.setNodeRegistry(nameNode, registryAddress);
+        emitter.setApprovedEmitter(registryAddress, true);
     }
 }
