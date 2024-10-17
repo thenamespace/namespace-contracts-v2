@@ -5,6 +5,7 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {EnsUtils} from "../utils/EnsUtils.sol";
 import {Controllable} from "../../controllers/Controllable.sol";
 import {IRegistryEmitter} from "./IRegistryEmitter.sol";
+import {TokenMetadata} from "./TokenMetadata.sol";
 import "./IEnsNameRegistry.sol";
 
 /**
@@ -17,6 +18,8 @@ contract EnsNameRegistry is ERC721, Controllable {
     mapping(bytes32 => uint256) public expiries;
     RegistryConfig public config;
     IRegistryEmitter emitter;
+    TokenMetadata tokenMetadata;
+    uint public immutable registryVersion = 2;
 
     mapping(address => uint256[]) _ownedTokens;
     mapping(address => mapping(uint256 token => uint8)) _ownedTokenStatus;
@@ -38,8 +41,9 @@ contract EnsNameRegistry is ERC721, Controllable {
         RegistryConfig memory _config
     ) ERC721(_config.tokenName, _config.tokenSymbol) {
         emitter = IRegistryEmitter(_config.emitter);
+        tokenMetadata = TokenMetadata(_config.tokenMetadataAddress);
         config = _config;
-        _mintNameToken(_config.namehash, _config.tokenOwner);
+        claimRegistryToken();
     }
 
     /**
@@ -132,6 +136,17 @@ contract EnsNameRegistry is ERC721, Controllable {
     }
 
     /**
+     * @dev Burns (removes) (in a bulk) an ENS names if allowed by the controllable fuse.
+     * Deletes the expiry associated with the name.
+     * @param nodes Hash representation of the ENS name.
+     */
+    function burnBulk(bytes32[] memory nodes) public registryTokenOwner {
+        for (uint i = 0; i < nodes.length; i++) {
+            burn(nodes[i]);
+        }
+    }
+
+    /**
      * @dev Burning controllable fuse, registry owner loses ability
      * to burn subnames
      */
@@ -139,10 +154,6 @@ contract EnsNameRegistry is ERC721, Controllable {
         if (_isControllable()) {
             config.parentControlType = ParentControlType.NonControllable;
         }
-    }
-
-    function setBaseUri(string memory _baseUri) external onlyOwner {
-        config.metadataUri = _baseUri;
     }
 
     function ownerOf(uint256 tokenId) public view override returns (address) {
@@ -240,12 +251,18 @@ contract EnsNameRegistry is ERC721, Controllable {
         emitter.emitExpirySet(node, expiries[node]);
     }
 
-    function _mintNameToken(bytes32 node, address owner) internal {
-        uint256 tokenId = uint256(node);
-        _mint(owner, tokenId);
-        expiries[node] = type(uint256).max;
+    function claimRegistryToken() internal {
+        uint256 registryTokenId = uint256(config.namehash);
+
+        require(
+            _ownerOf(registryTokenId) == address(0),
+            "Registry token already claimed"
+        );
+        expiries[config.namehash] = type(uint256).max;
+        _mint(config.tokenOwner, registryTokenId);
     }
 
+   
     function _isExpired(bytes32 node) public view returns (bool) {
         if (!_isExpirable()) {
             return false;
@@ -263,7 +280,7 @@ contract EnsNameRegistry is ERC721, Controllable {
     }
 
     function _baseURI() internal view override returns (string memory) {
-        return config.metadataUri;
+        return tokenMetadata.getMetadataURI();
     }
 
     function _update(

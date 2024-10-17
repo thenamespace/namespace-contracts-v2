@@ -9,6 +9,9 @@ import {RegistryFactory} from "./RegistryFactory.sol";
 import {RegistryExpiryExtender} from "./RegistryExpiryExtender.sol";
 import {IRegistryEmitter} from "../registries/IRegistryEmitter.sol";
 import {IEnsNameRegistry} from "../registries/IEnsNameRegistry.sol";
+import {IMulticallable} from "../resolver/IMulticallable.sol";
+import {IRegistryControllerProxy} from "./RegistryControllerProxy.sol";
+import {ControllerBase} from "./ControllerBase.sol";
 import "../Types.sol";
 
 /**
@@ -28,26 +31,25 @@ contract NameRegistryController is
     RegistryFactory,
     RegistryExpiryExtender
 {
-    INodeRegistryResolver registryResolver;
-    IRegistryEmitter emitter;
-    address public treasury;
-    string public registryMetadataURI;
-    address public resolver;
-
     constructor(
         address _verifier,
         address _treasury,
-        string memory _baseUri,
+        address _tokenMetadata,
         address _registryResolver,
         address _emitter,
-        address _resolver
-    ) SignatureVerifier(_verifier) Ownable(_msgSender()) {
-        registryMetadataURI = _baseUri;
-        registryResolver = INodeRegistryResolver(_registryResolver);
-        emitter = IRegistryEmitter(_emitter);
-        treasury = _treasury;
-        resolver = _resolver;
-    }
+        address _resolver,
+        address _controllerProxy
+    )
+        ControllerBase(
+            _verifier,
+            _treasury,
+            _tokenMetadata,
+            _registryResolver,
+            _emitter,
+            _resolver,
+            _controllerProxy
+        )
+    {}
 
     /**
      * @dev Mints a new subname if the provided context and signature are valid.
@@ -73,10 +75,11 @@ contract NameRegistryController is
      */
     function deploy(
         FactoryContext memory context,
-        bytes memory signature
+        bytes memory signature,
+        bytes[] memory resolverData
     ) external {
         verifyFactoryContextSignature(context, signature);
-        _deploy(context);
+        _deploy(context, resolverData);
     }
 
     /**
@@ -90,56 +93,5 @@ contract NameRegistryController is
     ) external payable {
         verifyExtendExpiryContextSignature(context, signature);
         _extendExpiry(context);
-    }
-
-    function setVerifier(address _verifier) external onlyOwner {
-        _setVerifier(_verifier);
-    }
-
-    function setBaseURI(string memory _baseUri) external onlyOwner {
-        registryMetadataURI = _baseUri;
-    }
-
-    function setTreasury(address _treasury) external onlyOwner {
-        treasury = _treasury;
-    }
-
-    function getRegistryResolver()
-        internal
-        view
-        override(RegistryMinter, RegistryFactory, RegistryExpiryExtender)
-        returns (INodeRegistryResolver)
-    {
-        return registryResolver;
-    }
-
-    function getRegistryURI() internal view override returns (string memory) {
-        return registryMetadataURI;
-    }
-
-    function getTreasury()
-        internal
-        view
-        override(RegistryMinter, RegistryExpiryExtender)
-        returns (address)
-    {
-        return treasury;
-    }
-
-    function getEmitter() internal view override returns (IRegistryEmitter) {
-        return emitter;
-    }
-
-    function getResolver() internal view override returns(address) {
-        return resolver;
-    }
-
-    function _owner()
-        internal
-        view
-        override(RegistryFactory)
-        returns (address)
-    {
-        return super.owner();
     }
 }

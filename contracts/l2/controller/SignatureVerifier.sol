@@ -10,11 +10,12 @@ error SignatureExpired();
 error NotVerifiedMinter();
 
 contract SignatureVerifier is EIP712 {
-    event VerifierSet(address);
-    address verifier;
+    event VerifierChanged(address verifier, bool allowed);
+    mapping(address => bool) verifiers;
+
     constructor(address _verifier) EIP712("namespace", "1") {
-        verifier = _verifier;
-        emit VerifierSet(_verifier);
+        verifiers[_verifier] = true;
+        emit VerifierChanged(_verifier, true);
     }
 
     function verifyFactoryContextSignature(
@@ -95,7 +96,7 @@ contract SignatureVerifier is EIP712 {
         bytes memory signature
     ) internal view {
         address exctractedSigner = ECDSA.recover(digest, signature);
-        if (exctractedSigner != verifier) {
+        if (!verifiers[exctractedSigner]) {
             revert InvalidSignature(exctractedSigner);
         }
     }
@@ -106,8 +107,8 @@ contract SignatureVerifier is EIP712 {
         }
     }
 
-    function _setVerifier(address newVerifier) internal virtual {
-        verifier = newVerifier;
-        emit VerifierSet(newVerifier);
+    function _setVerifier(address newVerifier, bool allowed) internal virtual {
+        verifiers[newVerifier] = allowed;
+        emit VerifierChanged(newVerifier, allowed);
     }
 }
