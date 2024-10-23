@@ -17,7 +17,7 @@ struct RegistryConfig {
     ExpirableType expirableType;
     string tokenName;
     string tokenSymbol;
-    string metadataUri;
+    address tokenMetadataAddress;
     address tokenOwner;
     bytes32 namehash;
     address emitter;

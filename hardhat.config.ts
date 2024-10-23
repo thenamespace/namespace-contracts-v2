@@ -20,13 +20,13 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: process.env.SEPOLIA_RPC,
       chainId: 11155111,
-      accounts: [process.env.SEPOLIA_WALLET_KEY as Hash],
+      accounts: [process.env.TEST_WALLET_KEY as Hash],
     },
     base: {
       url: process.env.BASE_RPC,
       chainId: 8453,
       accounts: [process.env.BASE_WALLET_KEY as Hash],
-    },
+    }
   },
   mocha: {
     timeout: 100000000,

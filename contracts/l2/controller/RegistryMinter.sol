@@ -4,12 +4,13 @@ pragma solidity ^0.8.24;
 import "../Types.sol";
 import {INodeRegistryResolver} from "../registry-resolver/INodeRegistryResolver.sol";
 import {IEnsNameRegistry, RegistryConfig} from "../registries/IEnsNameRegistry.sol";
-import {IMulticallable} from "../resolver/IMulticallable.sol";
+import {IRegistryControllerProxy} from "./RegistryControllerProxy.sol";
+import {ControllerBase} from "./ControllerBase.sol";
 
 error RegistryNotFound(bytes32);
 error InsufficientBalance(uint256, uint256);
 
-abstract contract RegistryMinter {
+abstract contract RegistryMinter is ControllerBase {
 
     event NameMinted(
         string label,
@@ -28,7 +29,7 @@ abstract contract RegistryMinter {
         bytes[] memory resolverData,
         bytes calldata extraData
     ) internal {
-        address registryAddress = getRegistryResolver().nodeRegistries(
+        address registryAddress = registryResolver.nodeRegistries(
             context.parentNode
         );
 
@@ -43,7 +44,7 @@ abstract contract RegistryMinter {
             node = _mintSimple(context, registryAddress);
         }
 
-        _transferFees(context);
+        transferFunds(context.price, context.fee, context.paymentReceiver);
 
         emit NameMinted(
             context.label,
@@ -62,12 +63,13 @@ abstract contract RegistryMinter {
         MintContext memory context,
         address registryAddress
     ) internal returns (bytes32) {
-        bytes32 node = IEnsNameRegistry(registryAddress).register(
+        bytes32 node = controllerProxy.register(
+            registryAddress,
             context.label,
             context.owner,
             context.expiry
         );
-        getRegistryResolver().setNodeRegistry(node, registryAddress);
+        registryResolver.setNodeRegistry(node, registryAddress);
         return node;
     }
 
@@ -76,14 +78,15 @@ abstract contract RegistryMinter {
         address registryAddress,
         bytes[] memory resolverData
     ) internal returns (bytes32) {
-        bytes32 node = IEnsNameRegistry(registryAddress).register(
+        bytes32 node = controllerProxy.register(
+            registryAddress,
             context.label,
             address(this),
             context.expiry
         );
 
-        getRegistryResolver().setNodeRegistry(node, registryAddress);
-        setRecordsWithMulticall(resolverData);
+        registryResolver.setNodeRegistry(node, registryAddress);
+        super.setResolverData(resolverData);
 
         uint256 tokenId = uint256(node);
         IEnsNameRegistry(registryAddress).transferFrom(
@@ -93,49 +96,4 @@ abstract contract RegistryMinter {
         );
         return node;
     }
-
-    function _transferFees(MintContext memory context) internal {
-        uint256 totalPrice = context.fee + context.price;
-        if (msg.value < totalPrice) {
-            revert InsufficientBalance(totalPrice, msg.value);
-        }
-
-        if (context.price > 0) {
-            (bool sentToOwner, ) = payable(context.paymentReceiver).call{
-                value: context.price
-            }("");
-            require(sentToOwner, "Could not transfer ETH to payment receiver");
-        }
-
-        if (context.fee > 0) {
-            (bool sentToTreasury, ) = payable(getTreasury()).call{
-                value: context.fee
-            }("");
-            require(sentToTreasury, "Could not transfer ETH to treasury");
-        }
-
-        uint256 remainder = msg.value - totalPrice;
-        if (remainder > 0) {
-            (bool remainderSent, ) = payable(msg.sender).call{
-                value: remainder
-            }("");
-            require(remainderSent, "Could not transfer ETH to msg.sender");
-        }
-    }
-
-    function setRecordsWithMulticall(
-        bytes[] memory resolverData
-    ) internal {
-        IMulticallable(getResolver()).multicall(resolverData);
-    }
-
-    function getRegistryResolver()
-        internal
-        view
-        virtual
-        returns (INodeRegistryResolver);
-
-    function getTreasury() internal view virtual returns (address);
-
-    function getResolver() internal view virtual returns (address);
 }

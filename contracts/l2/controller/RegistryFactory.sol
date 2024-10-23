@@ -8,10 +8,12 @@ import {IMulticallable} from "../resolver/IMulticallable.sol";
 import {EnsUtils} from "../utils/EnsUtils.sol";
 import {EnsNameRegistry} from "../registries/EnsNameRegistry.sol";
 import {IRegistryEmitter} from "../registries/IRegistryEmitter.sol";
+import {IRegistryControllerProxy} from "./RegistryControllerProxy.sol";
+import {ControllerBase} from "./ControllerBase.sol";
 
 error RegistryAlreadyExists(bytes32);
 
-abstract contract RegistryFactory {
+abstract contract RegistryFactory is ControllerBase {
     event RegistryDeployed(
         string label,
         string TLD,
@@ -24,40 +26,34 @@ abstract contract RegistryFactory {
         ExpirableType expirableType
     );
 
-    function _deploy(FactoryContext memory context) internal {
+    function _deploy(
+        FactoryContext memory context,
+        bytes[] memory resolverData
+    ) internal {
         bytes32 tdlHash = EnsUtils.namehash(bytes32(0), context.TLD);
         bytes32 nameNode = EnsUtils.namehash(tdlHash, context.label);
-        INodeRegistryResolver registryResolver = getRegistryResolver();
 
         if (registryResolver.nodeRegistries(nameNode) != address(0)) {
             revert RegistryAlreadyExists(nameNode);
         }
 
-        RegistryConfig memory config = RegistryConfig(
-            context.parentControl,
-            context.expirableType,
-            context.tokenName,
-            context.tokenSymbol,
-            getRegistryURI(),
-            context.owner,
-            nameNode,
-            address(getEmitter())
-        );
+        EnsNameRegistry registry;
+        if (resolverData.length > 0) {
+            registry = _deployWithResolverData(nameNode, context, resolverData);
+        } else {
+            registry = _deploySimple(nameNode, context);
+        }
 
-        EnsNameRegistry registry = new EnsNameRegistry(config);
+        address registryAddress = address(registry);
 
-        getEmitter().setApprovedEmitter(address(registry), true);
-
-        registry.setController(address(this), true);
-        registry.transferOwnership(_owner());
-
-        registryResolver.setNodeRegistry(nameNode, address(registry));
+        registry.setController(address(controllerProxy), true);
+        registry.transferOwnership(owner());
 
         emit RegistryDeployed(
             context.label,
             context.TLD,
             nameNode,
-            address(address(registry)),
+            registryAddress,
             context.tokenName,
             context.tokenSymbol,
             context.owner,
@@ -66,15 +62,54 @@ abstract contract RegistryFactory {
         );
     }
 
-    function getRegistryResolver() internal view virtual returns (INodeRegistryResolver);
+    function _deployWithResolverData(
+        bytes32 nameNode,
+        FactoryContext memory context,
+        bytes[] memory resolverData
+    ) internal returns (EnsNameRegistry) {
+        RegistryConfig memory config = RegistryConfig(
+            context.parentControl,
+            context.expirableType,
+            context.tokenName,
+            context.tokenSymbol,
+            tokenMetadata,
+            address(this),
+            nameNode,
+            address(emitter)
+        );
+        EnsNameRegistry registry = new EnsNameRegistry(config);
+        registryResolver.setNodeRegistry(nameNode, address(registry));
+        emitter.setApprovedEmitter(address(registry), true);
+        
+        super.setResolverData(resolverData);
 
-    function getEmitter() internal view virtual returns (IRegistryEmitter);
+        registry.transferFrom(address(this), context.owner, uint256(nameNode));
+        return registry;
+    }
 
-    function getRegistryURI()
-        internal
-        view
-        virtual
-        returns (string memory);
+    function _deploySimple(
+        bytes32 nameNode,
+        FactoryContext memory context
+    ) internal returns (EnsNameRegistry) {
+        RegistryConfig memory config = RegistryConfig(
+            context.parentControl,
+            context.expirableType,
+            context.tokenName,
+            context.tokenSymbol,
+            tokenMetadata,
+            context.owner,
+            nameNode,
+            address(emitter)
+        );
+        EnsNameRegistry registry = new EnsNameRegistry(config);
+        registryResolver.setNodeRegistry(nameNode, address(registry));
+        emitter.setApprovedEmitter(address(registry), true);
 
-    function _owner() internal view virtual returns(address);
+        return registry;
+    }
+
+    function _setPermissions(bytes32 nameNode, address registryAddress) internal {
+        registryResolver.setNodeRegistry(nameNode, registryAddress);
+        emitter.setApprovedEmitter(registryAddress, true);
+    }
 }
