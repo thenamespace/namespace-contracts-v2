@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ~0.8.20;
 
-import {Controllable} from "./controllers/Controllable.sol";
+import {Controllable} from "../controllers/Controllable.sol";
 import {INamespaceRegistry} from "./INamespaceRegistry.sol";
 import {ListedENSName} from "./Types.sol";
 

@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ~0.8.20;
 
-import {Controllable} from "./controllers/Controllable.sol";
+import {Controllable} from "../controllers/Controllable.sol";
 import {INamespaceRegistry} from "./INamespaceRegistry.sol";
 import {INameWrapperProxy} from "./INameWrapperProxy.sol";
-import {INameWrapper, CANNOT_UNWRAP} from "./ens/INameWrapper.sol";
+import {INameWrapper, CANNOT_UNWRAP} from "../ens/INameWrapper.sol";
 import {ListedENSName} from "./Types.sol";
 
 error NotPermitted();

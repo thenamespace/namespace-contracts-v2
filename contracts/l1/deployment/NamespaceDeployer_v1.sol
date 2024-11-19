@@ -6,7 +6,7 @@ import {NamespaceMinter} from "../NamespaceMinting.sol";
 import {NamespaceLister} from "../NamespaceListing.sol";
 import {NameWrapperProxy, INameWrapperProxy} from "../NameWrapperProxy.sol";
 import {INamespaceRegistry} from "../INamespaceRegistry.sol";
-import {INameWrapper} from "../ens/INameWrapper.sol";
+import {INameWrapper} from "../../ens/INameWrapper.sol";
 
 contract NamespaceDeployer {
     address public registry;
