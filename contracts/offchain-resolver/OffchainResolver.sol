@@ -26,7 +26,6 @@ contract OffchainResolver is Ownable, IExtendedResolver, SupportsInterface {
     mapping(address => bool) public signers;
     uint private constant REMOVE_SIGNERS = 0;
     uint private constant ADD_SIGNERS = 1;
-
     event NewSigners(address[] signers);
     event SignersRemoved(address[] signers);
 
