@@ -53,6 +53,13 @@ An ERC721-compliant registry contract designed to store subnames as NFTs. This e
 - Subname as NFTs: Each subname is represented as an NFT, inheriting the benefits of blockchain-based ownership, including transferability and immutability.
 - Compatibility: Fully supports ERC721 standards, allowing seamless integration with wallets, marketplaces, and other blockchain tools.
 
+## Hybrid Resolver
+
+Specialized resolver contract that ENS names use to set up for their subnames to be resolvable on the L2 chain
+while keeping the parent ENS name records on L1 (with options to migrate all records on the L2 chain).
+
+[Hybrid Resolver Repo](https://github.com/thenamespace/namespace-contracts-v2/tree/main/contracts/hybrid-resolver).
+
 ---
 
 ## Features
