@@ -196,7 +196,7 @@ contract NamespaceHybridResolver is
             if (configs[nameHash].resolutionType != 0) {
                 return configs[nameHash].resolutionType;
             } else {
-                current = extractDnsParent(dnsName);
+                current = extractDnsParent(current);
                 nameHash = current.namehash(0);
             }
         }
