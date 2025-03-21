@@ -32,4 +32,9 @@ interface INameWrapper is IERC1155 {
         bytes32 node,
         uint16 ownerControlledFuses
     ) external returns (uint32 newFuses);
+
+    function allFusesBurned(
+        bytes32 node,
+        uint32 fuseMask
+    ) external view returns (bool);
 }

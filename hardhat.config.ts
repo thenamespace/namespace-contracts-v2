@@ -1,8 +1,8 @@
 import "@nomicfoundation/hardhat-toolbox-viem";
-import { config as dotEnvConfig } from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import "solidity-coverage";
 import { Hash } from "viem";
+import { sepolia, base, mainnet } from "viem/chains"
 
 require("dotenv").config();
 
@@ -12,19 +12,25 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 100
-      }
+        runs: 200
+      },
+      viaIR: true
     }
   },
   networks: {
+    mainnet: {
+      url: `https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_TOKEN}`,
+      chainId: mainnet.id,
+      accounts: [process.env.TEST_WALLET_KEY as Hash],
+    },
     sepolia: {
-      url: process.env.SEPOLIA_RPC,
-      chainId: 11155111,
+      url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_TOKEN}`,
+      chainId: sepolia.id,
       accounts: [process.env.TEST_WALLET_KEY as Hash],
     },
     base: {
-      url: process.env.BASE_RPC,
-      chainId: 8453,
+      url: `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_TOKEN}`,
+      chainId: base.id,
       accounts: [process.env.BASE_WALLET_KEY as Hash],
     }
   },
@@ -32,7 +38,7 @@ const config: HardhatUserConfig = {
     timeout: 100000000,
   },
   etherscan: {
-    apiKey: process.env.BASESCAN_KEY,
+    apiKey: process.env.ETHERSCAN_KEY,
   },
 };
 

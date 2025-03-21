@@ -1,21 +1,19 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ~0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
 
-struct MintSubnameContext {
-    bytes32 parentNode;
-    string subnameLabel;
-    address resolver;
-    address subnameOwner;
-    uint32 fuses;
-    uint256 mintPrice;
-    uint256 mintFee;
-    uint64 ttl;
-    uint64 expiry;
-}
+bytes32 constant MINT_CONTEXT = keccak256(
+    "MintContext(string label,bytes32 parentNode,address owner,uint256 price,uint256 fee,address paymentReceiver,uint256 expiry,uint256 signatureExpiry,address verifiedMinter,uint32 fuses)"
+);
 
-struct ListedENSName {
+struct MintContext {
+    address owner;
     string label;
-    bytes32 nameNode;
+    bytes32 parentNode;
+    uint256 price;
+    uint256 fee;
     address paymentReceiver;
-    bool isListed;
+    uint64 expiry;
+    uint256 signatureExpiry;
+    address verifiedMinter;
+    uint32 fuses;
 }
